@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem('PARKPILOT_THEME');
+        if (t) document.documentElement.setAttribute('data-theme', t);
+      } catch (e) { }
+
+      window.quickLogin = function (role) {
+        role = role || 'admin';
+        try {
+          if (!window.appState) window.appState = {};
+          var adminObj = { username: 'admin', password: 'password', role: 'admin', displayName: 'Super Admin' };
+          var userObj = { username: 'user', password: 'password', role: 'user', displayName: 'Regular User' };
+          var chosen = (role === 'admin') ? adminObj : userObj;
+
+          window.appState.currentUser = chosen;
+          window.appState.currentUserRole = chosen.role;
+
+          try {
+            var raw = localStorage.getItem('PARKPILOT_STATE_V1');
+            var state = raw ? JSON.parse(raw) : {};
+            state.currentUser = chosen;
+            state.currentUserRole = chosen.role;
+            localStorage.setItem('PARKPILOT_STATE_V1', JSON.stringify(state));
+          } catch (e) { }
+
+          if (typeof window.applyRoleUI === 'function') window.applyRoleUI();
+          if (typeof window.showToast === 'function') window.showToast('Active profile: ' + chosen.displayName, 'success');
+
+          if (typeof window.switchView === 'function') {
+            window.switchView('dashboard');
+          } else {
+            window.location.href = 'dashboard.html';
+          }
+        } catch (err) {
+          console.error('Error in quickLogin:', err);
+          window.location.href = 'dashboard.html';
+        }
+      };
+    })();
+  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+  <title>ParkPilot — Smart Multi-Lot Parking System</title>
+  <meta name="description" content="ParkPilot — Intelligent multi-lot parking management system. Real-time slot allocation, Haversine GPS navigation, EV charging intelligence, and driver pass generation." />
+</head>
+<body data-page="landing">
+  <div class="page" id="top">
+    <!-- Sleek ParkPilot Site Header -->
+    <header class="site-header">
+      <a href="index.html" class="brand" onclick="window.scrollToTop(); return false;">
+        <span class="brand-mark"><span></span></span>
+        <span class="brand-copy">
+          <strong>ParkPilot</strong>
+          <small>LIVE PARKING NETWORK</small>
+        </span>
+      </a>
+      <nav class="site-nav">
+        <a href="javascript:void(0)" onclick="window.scrollToSection('how'); return false;">How it works</a>
+        <a href="javascript:void(0)" onclick="window.scrollToSection('locations'); return false;">Network Facilities</a>
+        <a href="javascript:void(0)" onclick="window.scrollToSection('recommendationEngine'); return false;">Smart Allocation</a>
+        <a href="javascript:void(0)" onclick="window.scrollToSection('features'); return false;">Platform Technology</a>
+      </nav>
+      <div class="header-actions">
+        <button class="btn-plain" onclick="window.toggleAppTheme()" title="Toggle Theme (Cyber Dark ⇋ Luxury Light)">
+          <span class="themeToggleEmojiMulti" style="font-size: 15px;">🌓</span>
+        </button>
+        <div id="landingAuthSnippet" style="display:inline-flex; align-items:center; gap:8px;">
+          <a href="auth.html" class="btn-plain" style="font-size: 12px; font-weight: 700;">Sign in</a>
+          <button class="btn btn-primary" onclick="window.handleConsoleAccess()">Operator console ↗</button>
+          <button class="btn btn-outline" onclick="window.openQuickParkModal()">Quick park ＋</button>
+        </div>
+      </div>
+      <button class="menu-btn" onclick="this.classList.toggle('active')">☰</button>
+    </header>
+
+    <main class="ps-view active" id="view-landing" style="display:block; padding:0; width:100%;">
+      <!-- Hero Section -->
+      <section class="container hero" id="hero">
+        <div class="hero-copy">
+          <div class="hero-kicker">
+            <span class="dot"></span> NOW COVERING BENGALURU <i></i> 5 FACILITIES LIVE
+          </div>
+          <h1>Intelligent city parking.<br><span>Zero searching</span> friction.</h1>
+          <p>ParkPilot turns the final 800 meters into a confident decision — finding the closest valid bay, explaining why it fits, and getting you there without the circling.</p>
+          <div class="hero-actions">
+            <button class="btn btn-primary" onclick="window.resolveUserLocation()">
+              📍 Resolve live GPS
+            </button>
+            <a class="btn-plain" href="javascript:void(0)" onclick="window.scrollToSection('how'); return false;">See how it works ↓</a>
+          </div>
+          <div class="proof">
+            <div class="avatars">
+              <span>AK</span><span>RM</span><span>NS</span><span>+2k</span>
+            </div>
+            <div>
+              <strong>Trusted by early drivers</strong>
+              <small>4.9/5 average parking confidence</small>
+            </div>
+          </div>
+        </div>
+
+        <div class="hero-visual">
+          <div class="hero-map-shell">
+            <div class="hero-map-top">
+              <span><span class="dot"></span> NETWORK LIVE</span>
+              <span id="heroClockText">09:42:18</span>
+            </div>
+            <div id="heroMap" class="hero-map"></div>
+            <div class="hero-map-bottom">
+              <span><b>5</b> facilities in range</span>
+              <span class="lime">⚡ EV ready</span>
+            </div>
+          </div>
+          <div class="score-float">
+            <span class="score-ring"><strong>96</strong><small>FIT</small></span>
+            <div>
+              <strong>Best bay found</strong>
+              <small id="heroBestBaySmall">City Mall · C-01</small>
+            </div>
+            <span class="lime" style="font-weight:900;">✓</span>
+          </div>
+          <div class="distance-float">
+            <span><strong>2 min</strong><small id="heroDistanceFloatText">to your bay</small></span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Deterministic Recommendation Section -->
+      <section class="container section" id="how">
+        <div class="section-head">
+          <div>
+            <span class="eyebrow">DETERMINISTIC RECOMMENDATION</span>
+            <h2>The calm between<br><em>where</em> and <em>parked.</em></h2>
+          </div>
+          <p>Every recommendation is based on real distance, live bay availability, vehicle compatibility, and reservation windows — not guesswork.</p>
+        </div>
+
+        <div class="recommendation glass" id="recommendationEngine">
+          <div class="rec-top">
+            <div>
+              <span class="eyebrow cyan">● LIVE RECOMMENDATION ENGINE</span>
+              <h3>Make the next bay<br><em>obvious.</em></h3>
+            </div>
+            <div class="fit">
+              FIT SCORE<strong id="landingFitScore">96</strong>/100
+            </div>
+          </div>
+
+          <div class="location">
+            <div class="location-icon">⌖</div>
+            <div>
+              <span class="micro">YOUR CURRENT LOCATION</span>
+              <strong id="landingRecUserLocation">Koramangala, Bengaluru</strong>
+              <small id="landingRecAccuracy">GPS resolved just now · 12 m accuracy</small>
+            </div>
+            <button class="btn-plain" onclick="window.resolveUserLocation()">Update ↻</button>
+          </div>
+
+          <div class="rec-main">
+            <div class="lot">
+              <span class="eyebrow cyan">RECOMMENDED LOT <span id="landingRecLotIndex">01</span></span>
+              <h4 id="landingRecLotName">City Mall</h4>
+              <span class="lot-meta" id="landingRecDistance">0.8 km away · 2 min drive</span>
+              <div class="why">
+                <strong>WHY THIS LOT?</strong>
+                <ul id="landingRecReasonsList" style="list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:8px;">
+                  <li>Exact vehicle compatibility</li>
+                  <li>22 bays available right now</li>
+                  <li>Closest valid facility</li>
+                  <li>EV support on site</li>
+                </ul>
+              </div>
+            </div>
+
+            <!-- Animated Radar Widget -->
+            <div class="radar">
+              <div class="ring ring-1"></div>
+              <div class="ring ring-2"></div>
+              <div class="ring ring-3"></div>
+              <div class="radar-center">⌖</div>
+              <span class="radar-label">YOU</span>
+              <span class="radar-label" id="radarTargetLabel">CITY MALL</span>
+            </div>
+          </div>
+
+          <div class="vehicle-row">
+            <div>
+              <span class="micro">VEHICLE COMPATIBILITY</span>
+              <strong>What are you driving?</strong>
+            </div>
+            <div class="vehicle-pills">
+              <button class="active" onclick="window.selectLandingVType('car', this)">🚗 Car</button>
+              <button onclick="window.selectLandingVType('suv', this)">🚙 SUV</button>
+              <button onclick="window.selectLandingVType('ev-car', this)">⚡ EV</button>
+              <button onclick="window.selectLandingVType('bike', this)">🏍️ Bike</button>
+            </div>
+          </div>
+
+          <button class="btn btn-primary full" onclick="window.executeLandingQuickPark()">
+            Allocate best bay & print pass →
+          </button>
+        </div>
+      </section>
+
+      <!-- Connected Metro Network Section -->
+      <section class="container section" id="locations">
+        <div class="section-head">
+          <div>
+            <span class="eyebrow">CONNECTED METRO NETWORK</span>
+            <h2>Your city, <em>less circular.</em></h2>
+          </div>
+          <div class="network-summary">
+            <b id="landingTotalFreeBays">71</b>
+            <span>open bays within<br>city network</span> ↗
+          </div>
+        </div>
+        <div id="landingFacilitiesGrid" class="facilities"></div>
+      </section>
+
+      <!-- Under the Hood / Principles Bento Grid -->
+      <section class="container section" id="features">
+        <div class="section-head">
+          <div>
+            <span class="eyebrow">UNDER THE HOOD</span>
+            <h2>Decisions you can<br><em>actually explain.</em></h2>
+          </div>
+          <p>Built for the moment when parking stops being a curbside problem and becomes a city-scale operations problem.</p>
+        </div>
+        <div class="features">
+          <div class="feature">
+            <div class="feature-icon">📍</div>
+            <h3>Haversine geolocation</h3>
+            <p>Real geographic distance calculated from latitude and longitude — down to the last useful meter without external proprietary APIs.</p>
+          </div>
+          <div class="feature">
+            <div class="feature-icon">✓</div>
+            <h3>Explainable allocation</h3>
+            <p>See exactly why a lot and bay were selected, from vehicle size fit to real-time occupancy and reservation collision rules.</p>
+          </div>
+          <div class="feature">
+            <div class="feature-icon">⚡</div>
+            <h3>O(1) data structures</h3>
+            <p>ES6 Map and Set primitives keep ticket lookup, vehicle exit, and duplicate vehicle entry prevention instantaneous.</p>
+          </div>
+          <div class="feature">
+            <div class="feature-icon">🕒</div>
+            <h3>Reservation logic</h3>
+            <p>Interval overlap mathematical checks prevent conflicting VIP and staff reservations before they happen while allowing contiguous slots.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Operator CTA Section -->
+      <section class="container cta">
+        <div>
+          <span class="eyebrow">FOR PARKING OPERATORS</span>
+          <h2>A better view of<br><em>every bay.</em></h2>
+          <p>One console for every facility, live activity stream, guided allocation, and the network intelligence to run parking with less noise.</p>
+        </div>
+        <button class="btn btn-primary" onclick="window.location.href='dashboard.html'">
+          Open operator console →
+        </button>
+      </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="container footer">
+      <a href="index.html" class="brand" onclick="window.scrollToTop(); return false;">
+        <span class="brand-mark"><span></span></span>
+        <span class="brand-copy">
+          <strong>ParkPilot</strong>
+          <small>LIVE PARKING NETWORK</small>
+        </span>
+      </a>
+      <span>© 2026 ParkPilot Systems · Smart Urban Mobility</span>
+      <div class="footer-links">
+        <a href="javascript:void(0)" onclick="window.scrollToSection('how'); return false;">Product</a>
+        <a href="javascript:void(0)" onclick="window.scrollToSection('locations'); return false;">Network</a>
+        <a href="dashboard.html">Console</a>
+        <a href="javascript:void(0)" onclick="window.showToast('All systems operational','success');return false">
+          Status <span class="dot"></span>
+        </a>
+      </div>
+    </footer>
+  </div>
+
+  <!-- Search Modal (⌘K) -->
+  <div class="ps-modal-overlay" id="globalSearchModal" onclick="if(event.target===this)window.closeGlobalSearch()">
+    <div class="ps-modal-card" style="max-width:560px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+        <input type="text" id="globalSearchInput" placeholder="Search plates, slots, lots..."
+          oninput="window.runGlobalSearch(this.value)" class="ps-input-field" style="width:100%;font-size:15px;" autofocus />
+        <button class="ps-circle-action-btn" onclick="window.closeGlobalSearch()" style="width:28px;height:28px;">✕</button>
+      </div>
+      <div id="globalSearchResults" style="max-height:300px;overflow-y:auto;display:flex;flex-direction:column;gap:6px;"></div>
+    </div>
+  </div>
+
+  <!-- Quick Park Modal (Check-in) -->
+  <div class="ps-modal-overlay" id="quickParkModal" onclick="if(event.target===this)window.closeModal('quickParkModal')">
+    <div class="ps-modal-card">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <span style="font-size:17px;font-weight:800;">Instant Vehicle Check-In</span>
+        <button class="ps-circle-action-btn" onclick="window.closeModal('quickParkModal')">✕</button>
+      </div>
+      <form onsubmit="event.preventDefault(); window.handleModalParkSubmit()" style="display:flex;flex-direction:column;gap:14px;">
+        <div style="display:flex;flex-direction:column;gap:4px;">
+          <label style="font-size:12px;font-weight:700;">License Plate</label>
+          <div style="display:flex;gap:8px;">
+            <input type="text" id="modalPlateInput" placeholder="e.g. XY68ZTR" required class="ps-input-field" />
+            <button type="button" class="ps-circle-action-btn" onclick="window.fillModalRandomPlate()">🎲</button>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+          <div style="display:flex;flex-direction:column;gap:4px;">
+            <label style="font-size:12px;font-weight:700;">Type</label>
+            <select id="modalVehicleTypeSelect" class="ps-input-field">
+              <option value="car">🚗 Car</option>
+              <option value="suv">🚙 SUV</option>
+              <option value="bike">🏍️ Bike</option>
+              <option value="ev-car">⚡ EV</option>
+            </select>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:4px;">
+            <label style="font-size:12px;font-weight:700;">Facility</label>
+            <select id="modalPreferredLotSelect" class="ps-input-field">
+              <option value="auto">📍 Auto (Nearest)</option>
+            </select>
+          </div>
+        </div>
+        <button type="submit" class="ps-btn-primary">⚡ Allocate Best-Fit Bay & Print Pass</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Printable Ticket Pass Modal -->
+  <div class="ps-modal-overlay" id="ticketModal" onclick="if(event.target===this)window.closeModal('ticketModal')">
+    <div class="modal" style="width:420px;">
+      <div class="modal-head">
+        <div>
+          <span class="eyebrow cyan">ALLOCATION CONFIRMED</span>
+          <h2 style="font-size: 20px;">Digital Parking Pass</h2>
+        </div>
+        <button class="close" onclick="window.closeModal('ticketModal')">✕</button>
+      </div>
+      <div id="ticketReceiptContent" style="display:flex;flex-direction:column;gap:8px;font-size:12.5px;padding:12px 0;"></div>
+      <div style="border-top:1px dashed var(--line);padding-top:12px;text-align:center;">
+        <div style="font-family:var(--font-mono);font-size:11px;font-weight:800;color:var(--cyan);" id="ticketBarcodeText">T-1001-BAY-CM-C01</div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-outline" onclick="window.printTicket()">🖨️ Print pass</button>
+        <button class="btn btn-primary" onclick="window.closeModal('ticketModal')">Done</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Exit / Departure Receipt Modal -->
+  <div class="ps-modal-overlay" id="exitModal" onclick="if(event.target===this)window.closeModal('exitModal')">
+    <div class="modal" style="width:420px;">
+      <div class="modal-head">
+        <div>
+          <span class="eyebrow cyan">SESSION CONCLUDED</span>
+          <h2 style="font-size: 20px;">Departure Receipt</h2>
+        </div>
+        <button class="close" onclick="window.closeModal('exitModal')">✕</button>
+      </div>
+      <div id="exitReceiptContent" style="display:flex;flex-direction:column;gap:10px;font-size:12.5px;padding:14px 0;"></div>
+      <div class="modal-actions">
+        <button class="btn btn-outline" onclick="window.printTicket()">🖨️ Print receipt</button>
+        <button class="btn btn-primary" onclick="window.closeModal('exitModal')">Done</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Container -->
+  <div class="ps-toast-container" id="toastContainer"></div>
+
+  <!-- Scripts -->
+  <script src="models.js?v=2.2"></script>
+  <script src="data.js?v=2.2"></script>
+  <script src="geolocation.js?v=2.2"></script>
+  <script src="booking-logic.js?v=2.2"></script>
+  <script src="reservation-logic.js?v=2.2"></script>
+  <script src="analytics.js?v=2.2"></script>
+  <script src="storage.js?v=2.2"></script>
+  <script src="simulation.js?v=2.2"></script>
+  <script src="map.js?v=2.2"></script>
+  <script src="app.js?v=2.2"></script>
+</body>
+</html>
