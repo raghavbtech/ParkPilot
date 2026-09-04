@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem('PARKPILOT_THEME');
+        if (t) document.documentElement.setAttribute('data-theme', t);
+      } catch (e) { }
+
+      window.quickLogin = function (role) {
+        role = role || 'admin';
+        try {
+          if (!window.appState) window.appState = {};
+          var adminObj = { username: 'admin', password: 'password', role: 'admin', displayName: 'Super Admin' };
+          var userObj = { username: 'user', password: 'password', role: 'user', displayName: 'Regular User' };
+          var chosen = (role === 'admin') ? adminObj : userObj;
+
+          window.appState.currentUser = chosen;
+          window.appState.currentUserRole = chosen.role;
+
+          try {
+            var raw = localStorage.getItem('PARKPILOT_STATE_V1');
+            var state = raw ? JSON.parse(raw) : {};
+            state.currentUser = chosen;
+            state.currentUserRole = chosen.role;
+            localStorage.setItem('PARKPILOT_STATE_V1', JSON.stringify(state));
+          } catch (e) { }
+
+          if (typeof window.applyRoleUI === 'function') window.applyRoleUI();
+          if (typeof window.showToast === 'function') window.showToast('Active profile: ' + chosen.displayName, 'success');
+
+          if (typeof window.switchView === 'function') {
+            window.switchView('dashboard');
+          } else {
+            window.location.href = 'dashboard.html';
+          }
+        } catch (err) {
+          console.error('Error in quickLogin:', err);
+          window.location.href = 'dashboard.html';
+        }
+      };
+    })();
+  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+  <title>Operations Dashboard — ParkPilot</title>
+</head>
+<body data-page="dashboard">
+  <div class="ps-app">
+    <aside class="ps-icon-sidebar">
+      <a href="dashboard.html" class="ps-sidebar-logo" title="ParkPilot Console">
+        <div class="ps-ribbon-icon">P</div>
+      </a>
+      <div class="ps-nav-icons-stack">
+        <a href="dashboard.html" class="ps-icon-btn active" data-view="dashboard" data-tooltip="Dashboard Cockpit">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+            <rect x="3" y="3" width="7" height="7" rx="1.5" /><rect x="14" y="3" width="7" height="7" rx="1.5" /><rect x="14" y="14" width="7" height="7" rx="1.5" /><rect x="3" y="14" width="7" height="7" rx="1.5" />
+          </svg>
+        </a>
+        <a href="parking.html" class="ps-icon-btn" data-view="slots" data-tooltip="Parking Management">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+            <rect x="3" y="3" width="18" height="18" rx="3" /><path d="M9 17V7h4a3 3 0 0 1 0 6H9" />
+          </svg>
+        </a>
+        <a href="reservations.html" class="ps-icon-btn" data-view="reservations" data-tooltip="Staff Reservations">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+            <rect x="3" y="4" width="18" height="18" rx="3" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" />
+          </svg>
+        </a>
+        <a href="map.html" class="ps-icon-btn" data-view="map" data-tooltip="City GPS Radar">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+            <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6" /><line x1="8" y1="2" x2="8" y2="18" /><line x1="16" y1="6" x2="16" y2="22" />
+          </svg>
+        </a>
+        <a href="analytics.html" class="ps-icon-btn" data-view="analytics" data-tooltip="Revenue & Yield">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+            <line x1="18" y1="20" x2="18" y2="10" /><line x1="12" y1="20" x2="12" y2="4" /><line x1="6" y1="20" x2="6" y2="14" />
+          </svg>
+        </a>
+        <a href="iot.html" class="ps-icon-btn" data-view="iot" data-tooltip="Live Activity & Barriers">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
+          </svg>
+        </a>
+      </div>
+      <div class="ps-sidebar-bottom">
+        <button class="ps-icon-btn" onclick="window.toggleAppTheme()" title="Toggle Theme (Cyber Dark ⇋ Luxury Light)"
+          data-tooltip="Switch Theme">
+          <span class="themeToggleEmojiMulti" style="font-size: 16px;">🌓</span>
+        </button>
+      </div>
+    </aside>
+    <main class="ps-main-layout">
+      <header class="ps-floating-topbar">
+        <div style="display: flex; align-items: center; gap: 24px;">
+          <a href="dashboard.html" class="brand" style="text-decoration: none;">
+            <span class="brand-mark"><span></span></span>
+            <span class="brand-copy">
+              <strong>ParkPilot</strong>
+              <small>OPERATIONS</small>
+            </span>
+          </a>
+          <div class="ps-topbar-nav-pills">
+            <a href="dashboard.html" class="ps-top-pill active" id="topNavDashboard" style="text-decoration:none;">Overview</a>
+            <a href="parking.html" class="ps-top-pill" id="topNavManagement" style="text-decoration:none;">Parking Management</a>
+            <a href="reservations.html" class="ps-top-pill" id="topNavReservation" style="text-decoration:none;">Reservations</a>
+            <a href="iot.html" class="ps-top-pill" id="topNavIot" style="text-decoration:none;">Live Activity</a>
+            <a href="map.html" class="ps-top-pill" id="topNavMap" style="text-decoration:none;">City Map</a>
+            <a href="analytics.html" class="ps-top-pill" id="topNavAnalytics" style="text-decoration:none;">Analytics</a>
+          </div>
+        </div>
+        <div class="ps-topbar-actions">
+          <div class="ps-sim-strip">
+            <button id="simToggleBtn" class="ps-sim-trigger" onclick="window.toggleSimulation()">
+              <span class="ps-sim-dot" id="simDot"></span>
+              <span id="simBtnLabel">Start Sim</span>
+            </button>
+            <select class="ps-sim-speed-select" onchange="window.changeSimulationSpeed(this.value)"
+              style="background:transparent;border:none;color:var(--text-muted);font-weight:700;font-size:11px;outline:none;cursor:pointer;">
+              <option value="1">1x</option>
+              <option value="2">2x</option>
+              <option value="5">5x</option>
+            </select>
+            <button class="ps-circle-action-btn" style="width:26px;height:26px;font-size:11px;"
+              onclick="window.triggerTrafficSpike()" title="Simulate Rush Hour Spike">⚡</button>
+            <button class="ps-circle-action-btn" style="width:26px;height:26px;font-size:11px;"
+              onclick="window.resetSystemState()" title="Reset State">↺</button>
+          </div>
+          <button class="ps-circle-action-btn" onclick="window.openGlobalSearch()" title="Search (⌘K)">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+              <circle cx="11" cy="11" r="8" />
+              <line x1="21" y1="21" x2="16.65" y2="16.65" />
+            </svg>
+          </button>
+          <button class="ps-circle-action-btn" onclick="window.openQuickParkModal()" title="Park Vehicle"
+            style="color:var(--accent-primary)">
+            <span>+</span>
+          </button>
+          <div class="ps-topbar-user" onclick="window.handleAuthClick()" style="cursor:pointer;" title="Click for Account">
+            <div class="ps-user-avatar-img" id="userAvatar">SA</div>
+            <div class="ps-user-text">
+              <span class="ps-user-title" id="userName">Super Admin</span>
+              <span class="ps-user-sub" id="userRole">Manage Network</span>
+            </div>
+          </div>
+          <button class="ps-circle-action-btn" onclick="window.handleLogout()" title="Sign out" style="color:var(--rose); font-size:13px; margin-left:4px;">⎋</button>
+        </div>
+      </header>
+<div class="ps-view" id="view-dashboard">
+        <!-- Dashboard Head / Greeting -->
+        <div class="dash-head" style="margin-bottom: 20px;">
+          <div>
+            <span class="eyebrow">OPERATOR CONSOLE / OVERVIEW</span>
+            <h1 id="dashGreetingHeader" style="margin: 6px 0 2px; font: 700 28px var(--display); letter-spacing: -.06em;"><span id="dashGreetingSalutation">Good evening</span>, <span id="dashGreetingName">Raghav</span><span class="cyan">.</span></h1>
+            <p id="dashGreetingDate" style="margin: 0; color: var(--muted); font-size: 11.5px;">Here’s the live operations pulse for today.</p>
+          </div>
+          <div class="dash-actions">
+            <button class="btn btn-outline" onclick="window.printTicket()">↓ Export report</button>
+            <button class="btn btn-primary" onclick="window.openQuickParkModal()">＋ Quick park</button>
+          </div>
+        </div>
+
+        <!-- 4 Bento KPI Row from ParkPilot.html -->
+        <div class="kpis" style="margin-bottom: 20px;">
+          <div class="kpi">
+            <div class="kpi-icon">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m12 2 9 5-9 5-9-5 9-5Z"/><path d="m3 12 9 5 9-5M3 17l9 5 9-5"/></svg>
+            </div>
+            <span>TOTAL CAPACITY</span>
+            <strong id="kpiTotalCap">102</strong>
+            <small>↗ +8.4% vs last hour</small>
+          </div>
+          <div class="kpi">
+            <div class="kpi-icon">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m5 12 4 4L19 6"/></svg>
+            </div>
+            <span>AVAILABLE NOW</span>
+            <strong id="kpiAvailableBays">71</strong>
+            <small>↗ Live sync</small>
+          </div>
+          <div class="kpi">
+            <div class="kpi-icon">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m5 17-1-5 2-5h10l2 5-1 5"/><path d="M5 17h14M7 17v2M17 17v2M6 12h12"/><circle cx="7" cy="14" r="1"/><circle cx="17" cy="14" r="1"/></svg>
+            </div>
+            <span>OCCUPIED</span>
+            <strong id="kpiOccupiedBays">31</strong>
+            <small style="color:var(--rose)">Live telemetry</small>
+          </div>
+          <div class="kpi">
+            <div class="kpi-icon">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m13 2-9 12h7l-1 8 9-12h-7l1-8Z"/></svg>
+            </div>
+            <span>REVENUE TODAY</span>
+            <strong id="kpiTotalRevenue">$1,840</strong>
+            <small style="color:var(--lime)">↗ Hourly yield active</small>
+          </div>
+        </div>
+
+        <!-- MAIN GRID: Parking Tower Blueprint (Left) + Cockpit HUD Navigation (Right) -->
+        <div class="ps-dashboard-grid-main">
+
+          <!-- LEFT COLUMN: Parking Tower Floorplan (from img1 & img2) -->
+          <div class="ps-tower-card">
+            <div class="ps-tower-head">
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <select id="facilitySelector" class="ps-facility-select"
+                  onchange="window.selectLot(this.value)"></select>
+              </div>
+              <!-- Level Switcher Removed (Single Level Facility) -->
+              <div class="ps-level-pills" id="lotTabsRow" style="display:none;"></div>
+            </div>
+
+            <!-- Floorplan 2D Bay Surface -->
+            <div class="ps-floorplan-surface">
+              <div class="ps-floorplan-section-lbl">Choose a parking spot</div>
+              <!-- Parking Bays Matrix -->
+              <div class="ps-bays-matrix-row" id="bayColCenter"></div>
+            </div>
+
+            <!-- Timeslot Picker Widget (Exact Component from img1.png) -->
+            <div class="ps-timeslot-box">
+              <div class="ps-timeslot-head">
+                <span class="ps-timeslot-title">Pick available timeslot</span>
+                <div class="ps-date-nav">
+                  <span onclick="window.changeTimeslotDate(-1)">&lt;</span>
+                  <span id="timeslotDateLabel">Today</span>
+                  <span onclick="window.changeTimeslotDate(1)">&gt;</span>
+                </div>
+              </div>
+
+              <div class="ps-timeslot-pills-grid" id="timeslotPillsGrid">
+                <button class="ps-time-pill" onclick="window.selectTimeslot('06:00', this)">06:00</button>
+                <button class="ps-time-pill" onclick="window.selectTimeslot('07:00', this)">07:00</button>
+                <button class="ps-time-pill" onclick="window.selectTimeslot('08:00', this)">08:00</button>
+                <button class="ps-time-pill available" onclick="window.selectTimeslot('09:00', this)">09:00</button>
+                <button class="ps-time-pill available" onclick="window.selectTimeslot('10:00', this)">10:00</button>
+                <button class="ps-time-pill available" onclick="window.selectTimeslot('11:00', this)">11:00</button>
+                <button class="ps-time-pill available" onclick="window.selectTimeslot('12:00', this)">12:00</button>
+                <button class="ps-time-pill selected" onclick="window.selectTimeslot('13:00', this)">13:00</button>
+                <button class="ps-time-pill selected" onclick="window.selectTimeslot('14:00', this)">14:00</button>
+                <button class="ps-time-pill" onclick="window.selectTimeslot('15:00', this)">15:00</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- RIGHT COLUMN: 3D Perspective Garage HUD Cockpit (Exact Replica of img1.png) -->
+          <!-- RIGHT COLUMN: 3D Perspective Garage HUD Cockpit (Exact Replica of img1.png) -->
+          <div class="ps-cockpit-card">
+            <!-- Top Cockpit Header: ↰ 200m Parking Guidance -->
+            <div class="ps-cockpit-header">
+              <div class="ps-cockpit-nav-direction">
+                <span class="ps-turn-arrow">↰</span>
+                <div>
+                  <div class="ps-distance-big" id="hudDistance">200m</div>
+                  <div class="ps-level-sub-label" id="hudLevelLabel">Ground Floor · Bay CM-C01</div>
+                </div>
+              </div>
+
+              <!-- Mini GPS Radar Map Widget -->
+              <div class="ps-mini-radar" onclick="window.switchView('map')" title="Open Full GPS Map">
+                <svg class="ps-radar-svg-map" viewBox="0 0 100 85">
+                  <!-- Radar Perspective Grid Lines -->
+                  <path d="M 5 60 L 50 40 L 95 60 M 50 40 L 50 10" fill="none" stroke="rgba(108,227,211,0.15)" stroke-width="1" />
+                  <path d="M 15 75 L 50 55 L 85 75" fill="none" stroke="rgba(108,227,211,0.15)" stroke-width="1" />
+                  <!-- Glowing Navigation Path -->
+                  <path d="M 15 75 Q 45 55 55 60 T 82 22" fill="none" stroke="var(--lime)" stroke-width="2.5" stroke-linecap="round" />
+                  <circle cx="55" cy="60" r="3.5" fill="var(--cyan)" />
+                  <circle cx="82" cy="22" r="7" fill="var(--lime)" />
+                  <text x="82" y="25.5" font-size="7.5" font-weight="900" text-anchor="middle" fill="#08110f">P</text>
+                </svg>
+              </div>
+            </div>
+
+            <!-- 3D Perspective Underground Garage with Animated Route Arrows & Gauges -->
+            <div class="ps-perspective-garage">
+              <!-- Glowing Lime Green Projected Route Floor -->
+              <div class="ps-painted-road">
+                <span class="ps-road-arrow">^</span>
+                <span class="ps-road-arrow">^</span>
+                <span class="ps-road-arrow">^</span>
+              </div>
+
+              <!-- Speedometer & Telemetry Arcs SVG (Matching img1.png) -->
+              <svg class="ps-gauge-arc-svg" viewBox="0 0 500 320" preserveAspectRatio="none">
+                <!-- Left Speedometer Arc & Ticks -->
+                <g class="hud-gauge-left-group">
+                  <path d="M 125 45 A 140 140 0 0 0 65 270" fill="none" stroke="rgba(255,255,255,0.18)" stroke-width="2" stroke-linecap="round" />
+                  <path d="M 67 245 A 140 140 0 0 1 82 175" fill="none" stroke="var(--lime)" stroke-width="4.5" stroke-linecap="round" />
+                  <text x="142" y="52" font-size="11" font-family="var(--mono)" font-weight="700" fill="rgba(255,255,255,0.45)">160</text>
+                  <text x="70" y="130" font-size="16" font-family="var(--mono)" font-weight="800" fill="rgba(255,255,255,0.3)">01</text>
+                  <text x="110" y="148" font-size="11" font-family="var(--mono)" font-weight="700" fill="rgba(255,255,255,0.45)">02</text>
+                  <text x="56" y="280" font-size="11" font-family="var(--mono)" font-weight="700" fill="rgba(255,255,255,0.45)">0</text>
+                </g>
+
+                <!-- Right Power/Efficiency Arc & Ticks -->
+                <g class="hud-gauge-right-group">
+                  <path d="M 375 45 A 140 140 0 0 1 435 270" fill="none" stroke="rgba(255,255,255,0.18)" stroke-width="2" stroke-linecap="round" />
+                  <line x1="430" y1="210" x2="446" y2="204" stroke="var(--lime)" stroke-width="4" stroke-linecap="round" />
+                  <text x="345" y="52" font-size="11" font-family="var(--mono)" font-weight="700" fill="rgba(255,255,255,0.45)">300</text>
+                  <text x="412" y="130" font-size="16" font-family="var(--mono)" font-weight="800" fill="rgba(255,255,255,0.3)">10</text>
+                  <text x="372" y="148" font-size="11" font-family="var(--mono)" font-weight="700" fill="rgba(255,255,255,0.45)">09</text>
+                  <text x="444" y="215" font-size="10" font-family="var(--mono)" font-weight="700" fill="var(--lime)">kW</text>
+                  <text x="424" y="280" font-size="11" font-family="var(--mono)" font-weight="700" fill="rgba(255,255,255,0.45)">-50</text>
+                </g>
+              </svg>
+
+              <!-- HUD Gauge Numerical Readouts -->
+              <div class="ps-hud-gauge-left">
+                <div class="ps-gauge-val" id="hudSpeed">10</div>
+                <div class="ps-gauge-unit">mph</div>
+              </div>
+
+              <div class="ps-hud-gauge-right">
+                <div class="ps-gauge-val" id="hudEnergy">280</div>
+                <div class="ps-gauge-unit">Avg Wh/mi</div>
+              </div>
+            </div>
+
+            <!-- Cockpit Footer: Instant Reservation CTA Button -->
+            <div class="ps-cockpit-footer">
+              <button class="btn btn-primary ps-btn-primary" style="width: 100%; justify-content: center; padding: 13px;" onclick="window.openQuickParkModal()">
+                ⚡ Instant Book Best Bay ($3.50/hr)
+              </button>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- BOTTOM ROW CARDS: Environmental Info + Current Parked + Nearby Options (From img2.png) -->
+        <div class="ps-bottom-cards-grid">
+
+          <!-- Card 1: Environmental Info (from img2.png) -->
+          <div class="ps-env-card">
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+              <span style="font-size:15px;font-weight:800;color:var(--text-main);">Environmental Info</span>
+              <span id="envFacilityBadge"
+                style="font-size:10px;font-weight:800;color:var(--accent-primary);background:var(--bg-card-subtle);padding:2px 8px;border-radius:999px;">LOT-01</span>
+            </div>
+            <div class="ps-env-stat-box">
+              <span style="font-weight:700;color:var(--text-body);">Facility Climate</span>
+              <span style="font-family:var(--font-mono);font-size:14px;font-weight:800;color:var(--accent-primary)"
+                id="envTemperatureVal">21°C · AQI 28 🌿</span>
+            </div>
+            <div class="ps-env-stat-box">
+              <span style="font-weight:700;color:var(--text-body);">EV Grid Load</span>
+              <span style="font-size:12px;font-weight:800;color:var(--accent-blue)" id="envGridLoadVal">⚡ 22 kW
+                Active</span>
+            </div>
+            <div class="ps-env-stat-box">
+              <span style="font-weight:700;color:var(--text-body);">Sensor Telemetry</span>
+              <span style="font-size:11.5px;font-weight:800;color:var(--accent-green)" id="envSensorStatus">● Online
+                (100%)</span>
+            </div>
+          </div>
+
+          <!-- Card 2: Current Parked Vehicle (from img2.png) -->
+          <div class="ps-parked-card" id="currentParkedCard">
+            <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;">
+              <span style="font-size:15px;font-weight:800;color:var(--text-main);white-space:nowrap;">Current Parked</span>
+              <div id="currentParkedPagination" style="display:flex;align-items:center;gap:6px;flex-shrink:0;">
+                <div style="display:flex;align-items:center;gap:3px;background:rgba(255,255,255,0.03);border:1px solid var(--line);border-radius:6px;padding:2px 4px;">
+                  <button class="ps-circle-action-btn" style="width:20px;height:20px;font-size:10px;padding:0;border:none;background:transparent;"
+                    onclick="window.stepCurrentParkedVehicle(-1)" title="Previous Parked Vehicle">&lt;</button>
+                  <span id="currentParkedIndexLabel"
+                    style="font-size:10.5px;font-weight:700;color:var(--text-muted);min-width:32px;text-align:center;">1 / 1</span>
+                  <button class="ps-circle-action-btn" style="width:20px;height:20px;font-size:10px;padding:0;border:none;background:transparent;"
+                    onclick="window.stepCurrentParkedVehicle(1)" title="Next Parked Vehicle">&gt;</button>
+                </div>
+                <button class="ps-circle-action-btn" id="currentParkedInspectBtn" style="width:26px;height:26px;font-size:12px;padding:0;border-radius:6px;"
+                  onclick="window.focusCurrentParkedSlot()" title="Inspect Bay">🔍</button>
+                <button class="ps-top-pill" id="currentParkedExitBtn"
+                  style="padding:5px 10px;font-size:11px;border-radius:6px;white-space:nowrap;"
+                  onclick="window.exitCurrentParkedVehicle()">Exit & Pay</button>
+              </div>
+            </div>
+            <div class="ps-parked-plate-display" id="currentParkedPlateDisplay"
+              onclick="window.focusCurrentParkedSlot()" style="cursor:pointer;" title="Click to view bay in floorplan">
+              XY68ZTR
+            </div>
+            <div style="display:flex;justify-content:space-between;font-size:12px;font-weight:700;">
+              <span>Bay: <strong style="color:var(--accent-primary);cursor:pointer;" id="currentParkedSlot"
+                  onclick="window.focusCurrentParkedSlot()">Slot CM-C01</strong></span>
+              <span>Elapsed: <strong id="currentParkedDuration" style="color:var(--text-body);">28m</strong></span>
+              <span>Fee: <strong id="currentParkedFee" style="color:var(--accent-primary);">$3.50</strong></span>
+            </div>
+          </div>
+
+          <!-- Card 3: Nearby Parking Options & Vehicle Selector (from img2.png) -->
+          <div class="ps-options-card">
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+              <span style="font-size:15px;font-weight:800;color:var(--text-main);">Vehicle Category</span>
+              <span id="categoryCountBadge" style="font-size:11px;font-weight:800;color:var(--accent-primary);">All Bays
+                Open</span>
+            </div>
+            <div class="ps-vehicle-icons-row">
+              <button class="ps-veh-icon-btn active" id="vehBtnAll" data-vtype="all"
+                onclick="window.selectDashboardCategory('all', this)" title="Show All Bays">
+                <span style="font-size:16px">🅿️</span>
+                <span>All</span>
+              </button>
+              <button class="ps-veh-icon-btn" id="vehBtnCar" data-vtype="car"
+                onclick="window.selectDashboardCategory('car', this)" title="Highlight Compatible Car Bays">
+                <span style="font-size:16px">🚗</span>
+                <span>Car</span>
+              </button>
+              <button class="ps-veh-icon-btn" id="vehBtnSuv" data-vtype="suv"
+                onclick="window.selectDashboardCategory('suv', this)" title="Highlight Large SUV Bays">
+                <span style="font-size:16px">🚙</span>
+                <span>SUV</span>
+              </button>
+              <button class="ps-veh-icon-btn" id="vehBtnEv" data-vtype="ev-car"
+                onclick="window.selectDashboardCategory('ev-car', this)" title="Highlight Dedicated EV Bays">
+                <span style="font-size:16px">⚡</span>
+                <span>EV</span>
+              </button>
+              <button class="ps-veh-icon-btn" id="vehBtnBike" data-vtype="bike"
+                onclick="window.selectDashboardCategory('bike', this)" title="Highlight Compact Bike Bays">
+                <span style="font-size:16px">🏍️</span>
+                <span>Bike</span>
+              </button>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Slot Drawer Backdrop -->
+  <div class="ps-modal-overlay" id="slotDrawerBackdrop" onclick="window.closeSlotDrawer()"></div>
+
+  <!-- Slot Inspection Drawer -->
+  <div class="ps-slot-drawer" id="slotInspectionDrawer">
+    <div class="ps-drawer-head">
+      <div>
+        <div style="font-size:18px;font-weight:900;" id="drawerSlotId">CM-C01</div>
+        <div style="font-size:12px;color:var(--text-muted);font-weight:700;" id="drawerSlotStatus">AVAILABLE</div>
+      </div>
+      <button class="ps-circle-action-btn" onclick="window.closeSlotDrawer()">✕</button>
+    </div>
+    <div class="ps-drawer-body" id="drawerBodyContent"></div>
+  </div>
+
+  <!-- Search Modal (⌘K) -->
+  <div class="ps-modal-overlay" id="globalSearchModal" onclick="if(event.target===this)window.closeGlobalSearch()">
+    <div class="ps-modal-card" style="max-width:560px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+        <input type="text" id="globalSearchInput" placeholder="Search plates, slots, lots (e.g. XY68, CM-C01)..."
+          oninput="window.runGlobalSearch(this.value)" class="ps-input-field" style="width:100%;font-size:15px;"
+          autofocus />
+        <button class="ps-circle-action-btn" onclick="window.closeGlobalSearch()"
+          style="width:28px;height:28px;">✕</button>
+      </div>
+      <div id="globalSearchResults"
+        style="max-height:300px;overflow-y:auto;display:flex;flex-direction:column;gap:6px;"></div>
+    </div>
+  </div>
+
+  <!-- Quick Park Modal (Check-in) -->
+  <div class="ps-modal-overlay" id="quickParkModal"
+    onclick="if(event.target===this)window.closeModal('quickParkModal')">
+    <div class="ps-modal-card">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <span style="font-size:17px;font-weight:800;">Instant Vehicle Check-In</span>
+        <button class="ps-circle-action-btn" onclick="window.closeModal('quickParkModal')">✕</button>
+      </div>
+      <form onsubmit="event.preventDefault(); window.handleModalParkSubmit()"
+        style="display:flex;flex-direction:column;gap:14px;">
+        <div style="display:flex;flex-direction:column;gap:4px;">
+          <label style="font-size:12px;font-weight:700;">License Plate</label>
+          <div style="display:flex;gap:8px;">
+            <input type="text" id="modalPlateInput" placeholder="e.g. XY68ZTR" required class="ps-input-field" />
+            <button type="button" class="ps-circle-action-btn" onclick="window.fillModalRandomPlate()">🎲</button>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+          <div style="display:flex;flex-direction:column;gap:4px;">
+            <label style="font-size:12px;font-weight:700;">Type</label>
+            <select id="modalVehicleTypeSelect" class="ps-input-field">
+              <option value="car">🚗 Car</option>
+              <option value="suv">🚙 SUV</option>
+              <option value="bike">🏍️ Bike</option>
+              <option value="ev-car">⚡ EV</option>
+            </select>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:4px;">
+            <label style="font-size:12px;font-weight:700;">Facility</label>
+            <select id="modalPreferredLotSelect" class="ps-input-field">
+              <option value="auto">📍 Auto (Nearest)</option>
+            </select>
+          </div>
+        </div>
+        <button type="submit" class="ps-btn-primary">⚡ Allocate Best-Fit Bay & Print Pass</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Printable Ticket Pass Modal -->
+  <div class="ps-modal-overlay" id="ticketModal" onclick="if(event.target===this)window.closeModal('ticketModal')">
+    <div class="modal" style="width:420px;">
+      <div class="modal-head">
+        <div>
+          <span class="eyebrow cyan">ALLOCATION CONFIRMED</span>
+          <h2 style="font-size: 20px;">Digital Parking Pass</h2>
+        </div>
+        <button class="close" onclick="window.closeModal('ticketModal')">✕</button>
+      </div>
+      <div id="ticketReceiptContent" style="display:flex;flex-direction:column;gap:8px;font-size:12.5px;padding:12px 0;"></div>
+      <div style="border-top:1px dashed var(--line);padding-top:12px;text-align:center;">
+        <div style="font-family:var(--font-mono);font-size:11px;font-weight:800;color:var(--cyan);" id="ticketBarcodeText">T-1001-BAY-CM-C01</div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-outline" onclick="window.printTicket()">🖨️ Print pass</button>
+        <button class="btn btn-primary" onclick="window.closeModal('ticketModal')">Done</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Exit / Departure Receipt Modal -->
+  <div class="ps-modal-overlay" id="exitModal" onclick="if(event.target===this)window.closeModal('exitModal')">
+    <div class="modal" style="width:420px;">
+      <div class="modal-head">
+        <div>
+          <span class="eyebrow cyan">SESSION CONCLUDED</span>
+          <h2 style="font-size: 20px;">Departure Receipt</h2>
+        </div>
+        <button class="close" onclick="window.closeModal('exitModal')">✕</button>
+      </div>
+      <div id="exitReceiptContent" style="display:flex;flex-direction:column;gap:10px;font-size:12.5px;padding:14px 0;"></div>
+      <div class="modal-actions">
+        <button class="btn btn-outline" onclick="window.printTicket()">🖨️ Print receipt</button>
+        <button class="btn btn-primary" onclick="window.closeModal('exitModal')">Done</button>
+      </div>
+    </div>
+  </div>
+  <!-- Toast Container -->
+  <div class="ps-toast-container" id="toastContainer"></div>
+
+  <!-- Scripts -->
+  <script src="models.js?v=2.2"></script>
+  <script src="data.js?v=2.2"></script>
+  <script src="geolocation.js?v=2.2"></script>
+  <script src="booking-logic.js?v=2.2"></script>
+  <script src="reservation-logic.js?v=2.2"></script>
+  <script src="analytics.js?v=2.2"></script>
+  <script src="storage.js?v=2.2"></script>
+  <script src="simulation.js?v=2.2"></script>
+  <script src="map.js?v=2.2"></script>
+  <script src="app.js?v=2.2"></script>
+</body>
+</html>
