@@ -1,0 +1,74 @@
+/* ParkPilot — Responsive Adaptations for Mobile, Tablet, and Desktop */
+
+/* Tablet & Smaller Desktops */
+@media (max-width: 1024px) {
+  .ps-dashboard-grid-main {
+    grid-template-columns: 1fr !important;
+  }
+
+  .ps-bottom-cards-grid {
+    grid-template-columns: 1fr 1fr !important;
+  }
+
+  .dash-head {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .kpis {
+    grid-template-columns: 1fr 1fr !important;
+  }
+}
+
+/* Mobile Devices */
+@media (max-width: 768px) {
+  .site-nav {
+    display: none;
+  }
+
+  .site-header {
+    padding: 12px 16px;
+  }
+
+  .hero {
+    grid-template-columns: 1fr !important;
+    padding-top: 30px !important;
+  }
+
+  .hero h1 {
+    font-size: 32px !important;
+  }
+
+  .kpis {
+    grid-template-columns: 1fr !important;
+  }
+
+  .ps-bottom-cards-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .ps-floating-topbar {
+    flex-direction: column;
+    height: auto;
+    padding: 10px 14px;
+    gap: 10px;
+  }
+
+  .ps-topbar-nav-pills {
+    overflow-x: auto;
+    width: 100%;
+    padding-bottom: 4px;
+  }
+
+  .ps-modal-card {
+    width: 92% !important;
+    max-width: 95vw !important;
+    margin: 10px;
+    padding: 18px !important;
+  }
+
+  .ps-lots-grid {
+    grid-template-columns: 1fr !important;
+  }
+}

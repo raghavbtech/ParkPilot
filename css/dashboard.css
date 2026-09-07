@@ -1,0 +1,35 @@
+/* ParkPilot — Dashboard & Facility Management Component Styles */
+
+.ps-lot-crud-card {
+  transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.ps-lot-crud-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+  border-color: rgba(108, 227, 211, 0.4);
+}
+
+.ps-lot-crud-card.selected {
+  border-color: var(--accent-primary, #a3e635) !important;
+  box-shadow: 0 0 16px rgba(163, 230, 53, 0.2);
+}
+
+/* Parking Network View Radar */
+.ps-network-view-wrapper {
+  user-select: none;
+}
+
+.network-svg-lot-node:hover circle {
+  filter: drop-shadow(0 0 8px var(--cyan, #6ce3d3));
+}
+
+.pulse-highlight {
+  animation: cardPulse 1.5s ease;
+}
+
+@keyframes cardPulse {
+  0% { transform: scale(1); box-shadow: 0 0 0 rgba(108, 227, 211, 0); }
+  50% { transform: scale(1.02); box-shadow: 0 0 20px rgba(108, 227, 211, 0.5); }
+  100% { transform: scale(1); box-shadow: 0 0 0 rgba(108, 227, 211, 0); }
+}
