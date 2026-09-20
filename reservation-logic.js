@@ -284,7 +284,70 @@ function bookAdvanceReservation(lotId, slotId, vehiclePlate, vehicleType, startT
   return reservation;
 }
 
+
+/**
+ * Updates an existing reservation's time window.
+ */
+function updateReservation(resId, newStartTime, newEndTime, state) {
+  if (!state || !state.reservations) throw new Error('State missing');
+  const res = state.reservations.get(resId);
+  if (!res) throw new Error('Reservation not found');
+
+  const sTime = new Date(newStartTime);
+  const eTime = new Date(newEndTime);
+  if (isNaN(sTime.getTime()) || isNaN(eTime.getTime()) || sTime >= eTime) {
+    throw new Error('Invalid start or end time');
+  }
+
+  for (const other of state.reservations.values()) {
+    if (other.id !== resId && other.lotId === res.lotId && other.slotId === res.slotId && other.status === 'reserved') {
+      if (hasOverlap(sTime, eTime, other.startTime, other.endTime)) {
+        throw new Error('Time collision with existing reservation');
+      }
+    }
+  }
+
+  res.startTime = sTime.toISOString();
+  res.endTime = eTime.toISOString();
+  return res;
+}
+
+/**
+ * Cancels a reservation by ID, releases any reserved slot hold, and updates status.
+ */
+function cancelReservation(resId, state) {
+  if (!state || !state.reservations) return false;
+  const res = state.reservations.get(resId);
+  if (!res) return false;
+
+  const lot = state.lots ? state.lots.get(res.lotId) : null;
+  if (lot) {
+    const slot = lot.getSlot(res.slotId);
+    if (slot && (slot.reservedFor === res.staffId || (slot.reservationWindow && slot.reservationWindow.reservationId === res.id))) {
+      slot.reservedFor = null;
+      slot.reservationWindow = null;
+    }
+  }
+
+  res.status = 'cancelled';
+  if (state.activityLog) {
+    state.activityLog.unshift({
+      id: 'ACT-' + Date.now() + '-' + Math.floor(Math.random() * 1000),
+      type: 'CANCELLATION',
+      title: 'Reservation Cancelled',
+      badge: 'rose',
+      message: 'Reservation ' + res.id + ' cancelled and slot released.',
+      timestamp: new Date().toISOString(),
+      reservationId: res.id
+    });
+    if (state.activityLog.length > 50) state.activityLog.pop();
+  }
+  return true;
+}
+
 if (typeof window !== 'undefined') {
+  window.cancelReservationLogic = cancelReservation;
+  window.updateReservationLogic = updateReservation;
   window.hasOverlap = hasOverlap;
   window.reserveStaffSlot = reserveStaffSlot;
   window.checkAndExpireReservations = checkAndExpireReservations;
@@ -302,6 +365,8 @@ if (typeof module !== 'undefined' && module.exports) {
     getTimeslotWindow,
     getConflictingReservation,
     isSlotReservedInWindow,
-    bookAdvanceReservation
+    bookAdvanceReservation,
+    updateReservation,
+    cancelReservation
   };
 }
