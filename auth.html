@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem('PARKPILOT_THEME');
+        if (t) document.documentElement.setAttribute('data-theme', t);
+      } catch (e) { }
+
+      window.quickLogin = function (role) {
+        role = role || 'raghav';
+        try {
+          if (!window.appState) window.appState = {};
+          var raghavObj = { username: 'raghav', password: 'password', role: 'admin', displayName: 'Raghav' };
+          var adminObj = { username: 'admin', password: 'password', role: 'admin', displayName: 'Super Admin' };
+          var userObj = { username: 'user', password: 'password', role: 'user', displayName: 'Regular User' };
+          var chosen = (role === 'raghav') ? raghavObj : ((role === 'admin') ? adminObj : userObj);
+
+          window.appState.currentUser = chosen;
+          window.appState.currentUserRole = chosen.role;
+
+          try {
+            var raw = localStorage.getItem('PARKPILOT_STATE_V1');
+            var state = raw ? JSON.parse(raw) : {};
+            state.currentUser = chosen;
+            state.currentUserRole = chosen.role;
+            localStorage.setItem('PARKPILOT_STATE_V1', JSON.stringify(state));
+          } catch (e) { }
+
+          if (typeof window.applyRoleUI === 'function') window.applyRoleUI();
+          if (typeof window.showToast === 'function') window.showToast('Active profile: ' + chosen.displayName, 'success');
+
+          if (typeof window.switchView === 'function') {
+            window.switchView('dashboard');
+          } else {
+            window.location.href = 'dashboard.html';
+          }
+        } catch (err) {
+          console.error('Error in quickLogin:', err);
+          window.location.href = 'dashboard.html';
+        }
+      };
+    })();
+  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+  <title>Account Authentication — ParkPilot</title>
+</head>
+<body data-page="auth">
+  <div class="ps-app" style="justify-content: center; align-items: center; min-height: 100vh; background: var(--bg-body);">
+    <div style="width: 100%; max-width: 460px; padding: 20px;">
+      <div style="display:flex;justify-content:center;margin-bottom:24px;">
+        <a href="index.html" class="brand" style="text-decoration: none; justify-content: center;">
+          <span class="brand-mark"><span></span></span>
+          <span class="brand-copy">
+            <strong>ParkPilot</strong>
+            <small>IDENTITY PORTAL</small>
+          </span>
+        </a>
+      </div>
+<div class="ps-view" id="view-auth" style="width: 100%; max-width: 460px; margin: 40px auto; padding: 20px;">
+        <div class="glass" style="text-align: center; padding: 36px 28px; border-radius: 14px;">
+          <div class="brand-mark" style="width: 42px; height: 42px; margin: 0 auto 16px; transform: rotate(-6deg);"><span></span></div>
+          <span class="eyebrow cyan">IDENTITY & ACCESS CONTROL</span>
+          <h2 style="margin:8px 0 6px; font: 700 26px var(--display); letter-spacing: -.06em; color: var(--text);">ParkPilot Portal<span class="cyan">.</span></h2>
+          <p style="color: var(--muted); font-size: 12px; margin: 0 0 24px;">Operator console authorization & multi-role session control.</p>
+
+          <!-- Active Session Card -->
+          <div id="authActiveSessionStatus" style="display:none; margin-bottom: 20px; padding: 14px; background: rgba(182,239,120,.05); border-radius: 10px; border: 1px solid rgba(182,239,120,.2); text-align: left;">
+            <div style="font: 700 9px var(--mono); color: var(--lime); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 6px;">● Active Session</div>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+              <div>
+                <div style="font: 700 15px var(--display); color: var(--text);" id="authActiveUserName">Super Admin</div>
+                <div style="font: 500 10.5px var(--mono); color: var(--muted);" id="authActiveUserRole">Super Admin (Full Access)</div>
+              </div>
+              <button type="button" class="btn btn-primary" style="padding: 8px 14px; font-size: 11px;" onclick="window.switchView('dashboard')">Open Console →</button>
+            </div>
+            <div style="display: flex; gap: 8px; margin-top: 10px;">
+              <button type="button" class="btn btn-outline" id="authSwitchRoleBtn" style="flex: 1; font-size: 10.5px; padding: 8px 10px;">👤 Switch to Regular User Mode</button>
+              <button type="button" class="btn btn-outline" onclick="window.handleLogout()" style="font-size: 10.5px; padding: 8px 10px; color: var(--rose); border-color: rgba(239,140,145,.3);">Log Out</button>
+            </div>
+          </div>
+
+          <!-- Quick Demo Logins -->
+          <div style="margin-bottom: 20px; text-align: left;">
+            <div style="font: 500 8.5px var(--mono); color: var(--muted2); text-transform: uppercase; letter-spacing: 0.12em; margin-bottom: 8px;">Instant 1-Click Access</div>
+            <div style="display: flex; flex-direction: column; gap: 8px;">
+              <button type="button" class="btn btn-outline" onclick="window.quickLogin('raghav')" style="width: 100%; display: flex; align-items: center; justify-content: flex-start; gap: 10px; font-size: 11.5px; padding: 11px 14px;">
+                <span class="cyan" style="font-size: 14px;">⚡</span> <strong>Continue as Raghav (Admin)</strong> <span class="mono micro" style="margin-left:auto; color:var(--cyan);">PRIMARY OPERATOR</span>
+              </button>
+              <button type="button" class="btn btn-outline" onclick="window.quickLogin('admin')" style="width: 100%; display: flex; align-items: center; justify-content: flex-start; gap: 10px; font-size: 11.5px; padding: 11px 14px;">
+                <span class="lime" style="font-size: 14px;">⚡</span> <strong>Continue as Super Admin</strong> <span class="mono micro" style="margin-left:auto; color:var(--lime);">FULL ACCESS</span>
+              </button>
+              <button type="button" class="btn btn-outline" onclick="window.quickLogin('user')" style="width: 100%; display: flex; align-items: center; justify-content: flex-start; gap: 10px; font-size: 11.5px; padding: 11px 14px;">
+                <span class="cyan" style="font-size: 14px;">👤</span> <strong>Continue as Regular User</strong> <span class="mono micro" style="margin-left:auto; color:var(--cyan);">DRIVER MODE</span>
+              </button>
+            </div>
+          </div>
+
+          <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 18px;">
+            <div style="flex: 1; height: 1px; background: var(--border-subtle);"></div>
+            <span style="font-size: 11px; color: var(--text-muted); font-weight: 700;">OR SIGN IN WITH CREDENTIALS</span>
+            <div style="flex: 1; height: 1px; background: var(--border-subtle);"></div>
+          </div>
+
+          <!-- Credentials hint badge -->
+          <div style="font-size: 11.5px; color: var(--text-muted); margin-bottom: 14px; background: var(--bg-card-subtle); padding: 8px 12px; border-radius: 8px; border: 1px solid var(--border-subtle); text-align: left;">
+            🔑 Default Accounts: <strong>raghav</strong> / <strong>password</strong> (Raghav Admin) • <strong>admin</strong> / <strong>password</strong> (Admin) • <strong>user</strong> / <strong>password</strong> (User)
+          </div>
+
+          <!-- Login Form -->
+          <form id="loginFormContainer" onsubmit="window.handleLoginSubmit(event)">
+            <div style="display:flex; flex-direction:column; gap:12px; margin-bottom: 16px;">
+              <input type="text" id="authUsername" placeholder="Username (e.g. admin)" required class="ps-input-field" style="width:100%; box-sizing:border-box;" />
+              <input type="password" id="authPassword" placeholder="Password (e.g. password)" required class="ps-input-field" style="width:100%; box-sizing:border-box;" />
+            </div>
+            <button type="submit" class="ps-btn-primary" style="width: 100%; margin-bottom: 12px; padding: 10px; font-size: 14px;">Sign In & Open Console</button>
+            <div style="font-size: 12px; color: var(--text-muted);">
+              Need a new account? <a href="#" onclick="window.toggleAuthMode(); return false;" style="color: var(--accent-primary); font-weight: 700;">Create Account</a>
+            </div>
+          </form>
+
+          <!-- Signup Form -->
+          <form id="signupFormContainer" onsubmit="window.handleSignupSubmit(event)" style="display: none;">
+            <h3 style="margin-top:0; margin-bottom: 16px; font-size: 17px;">Create New Account</h3>
+            <div style="display:flex; flex-direction:column; gap:12px; margin-bottom: 16px;">
+              <input type="text" id="signupUsername" placeholder="Username" required class="ps-input-field" style="width:100%; box-sizing:border-box;" />
+              <input type="password" id="signupPassword" placeholder="Password" required class="ps-input-field" style="width:100%; box-sizing:border-box;" />
+              <input type="text" id="signupName" placeholder="Full Name (e.g. Alex Rivera)" class="ps-input-field" style="width:100%; box-sizing:border-box;" />
+              <select id="signupRole" class="ps-input-field" style="width:100%; box-sizing:border-box; background: var(--bg-body); color: var(--text-primary);">
+                <option value="admin" selected>Super Admin (Full Console Access)</option>
+                <option value="user">Regular User (Public Access)</option>
+              </select>
+            </div>
+            <button type="submit" class="ps-btn-primary" style="width: 100%; margin-bottom: 12px; padding: 10px; font-size: 14px;">Sign Up & Open Console</button>
+            <div style="font-size: 12px; color: var(--text-muted);">
+              Already registered? <a href="#" onclick="window.toggleAuthMode(); return false;" style="color: var(--accent-primary); font-weight: 700;">Sign In</a>
+            </div>
+          </form>
+
+          <!-- Back Navigation Links -->
+          <button type="button" class="ps-btn-secondary" onclick="window.switchView('dashboard')" style="width: 100%; margin-top: 14px; font-size: 12px;">← Go to Operator Console</button>
+          <button type="button" class="ps-btn-secondary" onclick="window.switchView('landing')" style="width: 100%; margin-top: 6px; background: transparent; border: none; text-decoration: underline; color: var(--text-muted); font-size: 12px; cursor: pointer;">← Go to Driver Landing Page</button>
+        </div>
+      </div>
+
+    </main>
+  </div>
+    </div>
+  </div>
+  <!-- Toast Container -->
+  <div class="ps-toast-container" id="toastContainer"></div>
+
+  <!-- Scripts -->
+  <script src="models.js?v=2.2"></script>
+  <script src="data.js?v=2.2"></script>
+  <script src="geolocation.js?v=2.2"></script>
+  <script src="booking-logic.js?v=2.2"></script>
+  <script src="reservation-logic.js?v=2.2"></script>
+  <script src="analytics.js?v=2.2"></script>
+  <script src="storage.js?v=2.2"></script>
+  <script src="simulation.js?v=2.2"></script>
+  <script src="map.js?v=2.2"></script>
+  <script src="app.js?v=2.2"></script>
+</body>
+</html>
