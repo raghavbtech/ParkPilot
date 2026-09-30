@@ -21,7 +21,6 @@ const HTML_PAGES = [
   'reservations.html',
   'map.html',
   'analytics.html',
-  'iot.html',
   'auth.html'
 ];
 
@@ -319,14 +318,6 @@ check('runGlobalSearch returns accurate matches across tickets and lots', () => 
   assert.ok(facilityResults.length >= 1, 'Finds Tech Park facility');
 });
 
-// Feature 4.10: IoT Barrier Gate Toggles
-check('toggleBarrier toggles entry and exit gates', () => {
-  const northEl = getOrCreateElement('northGateState');
-  window.toggleBarrier('north', 'OPEN');
-  assert.ok(northEl.innerHTML.includes('MANUAL (RAISED)'));
-  window.toggleBarrier('north', 'CLOSE');
-  assert.ok(northEl.innerHTML.includes('AUTO (LOWERED)'));
-});
 
 // Feature 4.11: Dynamic Surge Pricing Calculation
 check('updateSurgeSimulator computes fee yield with surge multipliers', () => {

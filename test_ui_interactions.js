@@ -92,7 +92,7 @@ test('switchView switches active view without error', () => {
   window.appState.currentUser = { username: 'testAdmin', role: 'admin' };
   window.appState.currentUserRole = 'admin';
   
-  const views = ['dashboard', 'landing', 'slots', 'reservations', 'analytics', 'map', 'iot'];
+  const views = ['dashboard', 'landing', 'slots', 'reservations', 'analytics', 'map'];
   views.forEach(v => {
     window.switchView(v);
     assert.strictEqual(window.appState.currentView, v);

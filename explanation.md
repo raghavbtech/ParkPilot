@@ -90,22 +90,9 @@ This guide provides a concise summary of every major feature implemented in **Pa
 
 ---
 
-## 8. IoT Gate Barrier Simulator & Rush Hour Traffic Spike
-- **What it does:** Simulates hardware barrier gates with ultrasonic sensors. You can trigger automated traffic spikes or manually override entry and exit barriers.
-- **Key Functions:**
-  - `simulationTick(state)` — in `simulation.js`
-  - `triggerTrafficSpike()` — in `simulation.js`
-  - `toggleGateBarrier(gateName)` — in `app.js`
-- **How to Demonstrate:**
-  1. Open **`iot.html`**.
-  2. Click **"⚡ Simulate Rush Hour Spike"** to inject sudden traffic and watch the live event feed update.
-  3. Click **"Manual Toggle"** on Entry/Exit barriers to switch states between `OPEN` and `CLOSED`.
-
----
-
-## 9. Role-Based Access Control & Vehicle Ownership Protection
+## 8. Role-Based Access Control & Vehicle Ownership Protection
 - **What it does:** 
-  1. **Privilege Isolation**: Restricts administrative capabilities (registering facilities, barrier overrides) strictly to Super Admins.
+  1. **Privilege Isolation**: Restricts administrative capabilities (registering facilities, administrative overrides) strictly to Super Admins.
   2. **Vehicle Ownership & Protected Checkout**: A Regular User can observe all parking bays across the lot (full visibility of telemetry, occupancy rates, and slot maps), but **can only check out / exit their own vehicle** (`XY68ZTR`). If they view or attempt to exit a foreign vehicle, the checkout and barcode actions are locked behind a **Protected Vehicle Session** shield
   3. **Super Admin Override**: Super Admins retain operator clearance to exit and manage any vehicle in any bay.
 - **Key Functions:**
@@ -120,15 +107,15 @@ This guide provides a concise summary of every major feature implemented in **Pa
 
 ---
 
-## 10. Multi-Page Architecture & LocalStorage Persistence
-- **What it does:** The project is split into 8 clean, dedicated HTML pages (`index.html`, `dashboard.html`, `slots.html`, `reservations.html`, `map.html`, `analytics.html`, `iot.html`, `auth.html`). All state is automatically serialized to `localStorage` under `PARKPILOT_STATE_V1` so data is preserved across page navigations and browser refreshes.
+## 9. Multi-Page Architecture & LocalStorage Persistence
+- **What it does:** The project is split into clean, dedicated HTML pages (`index.html`, `dashboard.html`, `parking.html`, `reservations.html`, `map.html`, `analytics.html`, `auth.html`). All state is automatically serialized to `localStorage` under `PARKPILOT_STATE_V1` so data is preserved across page navigations and browser refreshes.
 - **Key Functions:**
   - `saveToLocalStorage(state)` — in `storage.js`
   - `loadFromLocalStorage()` — in `storage.js`
   - `switchView(viewName)` — in `app.js`
 - **How to Demonstrate:**
   1. Park a vehicle on `dashboard.html`.
-  2. Navigate to `slots.html` or `analytics.html` or refresh the browser.
+  2. Navigate to `parking.html` or `analytics.html` or refresh the browser.
   3. Show that the vehicle, occupied bay, and revenue remain updated across all pages.
 
 ---
@@ -138,5 +125,5 @@ This guide provides a concise summary of every major feature implemented in **Pa
 2. *"It uses the **Haversine formula** to calculate live GPS distances and assign the closest lot."*
 3. *"It features a **deterministic Best-Fit engine** ensuring SUVs and EVs get exact matching bays."*
 4. *"We implemented **Staff Reservations with interval collision detection** to prevent double-booking."*
-5. *"We built an **IoT simulation engine** for gate barriers and **dynamic surge pricing**."*
-6. *"The system enforces **Role-Based Access Control** (Admin vs. User) and maintains state across **8 modular pages** using `localStorage`."*
+5. *"We built a **traffic simulation engine** with live events and **dynamic surge pricing**."*
+6. *"The system enforces **Role-Based Access Control** (Admin vs. User) and maintains state across **modular pages** using `localStorage`."*

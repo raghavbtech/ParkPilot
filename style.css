@@ -1232,32 +1232,6 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
   color: var(--amber);
 }
 
-/* IoT & Barrier Gates View */
-.iot-gates-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
-  margin-top: 16px;
-}
-.gate-card {
-  padding: 22px;
-  border: 1px solid var(--line);
-  border-radius: 10px;
-  background: rgba(255,255,255,.025);
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-}
-.gate-status-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 5px 9px;
-  border-radius: 5px;
-  font: 700 9px var(--mono);
-}
-.gate-open { color: var(--lime); background: rgba(182,239,120,.1); border: 1px solid rgba(182,239,120,.2); }
-.gate-closed { color: var(--rose); background: rgba(239,140,145,.1); border: 1px solid rgba(239,140,145,.2); }
 
 /* Surge Pricing & Analytics */
 .analytics-grid {
@@ -2048,7 +2022,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
   .sidebar { display: none; }
   .dashboard { padding: 25px 16px 35px; }
   .kpis { grid-template-columns: repeat(2,1fr); }
-  .dashboard-grid, .bottom-grid, .reservations-view-grid, .iot-gates-grid, .analytics-grid { grid-template-columns: 1fr; }
+  .dashboard-grid, .bottom-grid, .reservations-view-grid, .analytics-grid { grid-template-columns: 1fr; }
   .right-stack { display: grid; grid-template-columns: 1fr 1fr; }
   .right-stack .right-panel:last-child { grid-column: span 2; }
   .floorplan .bay-grid { grid-template-columns: repeat(4,1fr); }

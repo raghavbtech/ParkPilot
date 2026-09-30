@@ -102,7 +102,7 @@ function initApplicationState() {
 
   if (!appState.landingSelectedVType) appState.landingSelectedVType = 'car';
 
-  const validViews = ['dashboard', 'landing', 'slots', 'parking', 'reservations', 'analytics', 'map', 'iot', 'auth'];
+  const validViews = ['dashboard', 'landing', 'slots', 'parking', 'reservations', 'analytics', 'map', 'auth'];
 
   // Detect current page from body[data-page] or URL path for multi-page routing
   let pageName = (typeof document !== 'undefined' && document.body && document.body.dataset && document.body.dataset.page) || null;
@@ -630,8 +630,7 @@ function switchView(viewName, pushToHistory = false) {
     slots: 'topNavManagement',
     parking: 'topNavManagement',
     analytics: 'topNavAnalytics',
-    map: 'topNavMap',
-    iot: 'topNavIot'
+    map: 'topNavMap'
   };
   document.querySelectorAll('.ps-top-pill').forEach(el => {
     el.classList.remove('active');
@@ -697,7 +696,7 @@ function switchView(viewName, pushToHistory = false) {
     }
     renderAuthView();
   } else {
-    // Console views: dashboard, slots, reservations, analytics, map, iot
+    // Console views: dashboard, slots, reservations, analytics, map
     if (sidebar) sidebar.style.display = 'flex';
     if (topbar) topbar.style.display = 'flex';
     const navPills = document.querySelector('.ps-topbar-nav-pills');
@@ -725,8 +724,7 @@ function switchView(viewName, pushToHistory = false) {
     renderReservationsTable();
   } else if (viewName === 'analytics') {
     renderAnalyticsCharts();
-  } else if (viewName === 'iot') {
-    renderActivityFeed();
+
   } else if (viewName === 'map') {
     if (typeof mapInstance !== 'undefined' && mapInstance) {
       setTimeout(() => mapInstance.invalidateSize(), 150);
@@ -805,7 +803,6 @@ function renderAll() {
   renderLandingPage();
   updateCurrentParkedWidget();
   updateEnvironmentalWidget();
-  renderActivityFeed();
   renderAnalyticsStats();
   syncMapMarkers(appState.lots, appState.selectedLotId, selectLot);
 }
@@ -829,8 +826,7 @@ function updateEnvironmentalWidget() {
   const kw = evChargingCount * 11;
   setText('envGridLoadVal', kw > 0 ? `⚡ ${kw} kW Active Draw` : '⚡ 0 kW (Standby)');
 
-  // Sensor Telemetry
-  setText('envSensorStatus', `● Online (${lot.slots.size}/${lot.slots.size} Nodes)`);
+
 }
 
 function updateCurrentParkedWidget() {
@@ -1842,36 +1838,7 @@ function renderReservationsTable() {
   }).join('');
 }
 
-// ==========================================================================
-// LIVE ACTIVITY FEED (Milestone 6)
-// ==========================================================================
-function renderActivityFeed() {
-  const container = document.getElementById('activityFeedList');
-  if (!container) return;
 
-  if (appState.activityLog.length === 0) {
-    container.innerHTML = `<div style="padding:20px;text-align:center;color:var(--text-muted)">No activity logged yet.</div>`;
-    return;
-  }
-
-  const recent = [...appState.activityLog].reverse().slice(0, 10);
-  container.innerHTML = recent.map(act => {
-    let badgeColor = 'var(--accent-green)';
-    if (act.type === 'EXIT') badgeColor = 'var(--accent-rose)';
-    if (act.type === 'EXPIRY') badgeColor = 'var(--accent-amber)';
-
-    const timeStr = new Date(act.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-    return `
-      <div style="padding:10px 14px;background:var(--bg-card-subtle);border-radius:8px;border-left:3px solid ${badgeColor};display:flex;justify-content:space-between;align-items:center;">
-        <div>
-          <div style="font-weight:700;font-size:12.5px;">${act.message}</div>
-          <div style="font-size:10.5px;color:var(--text-muted);">${act.title} · ${timeStr}</div>
-        </div>
-        <span style="font-size:10px;font-weight:800;color:${badgeColor};text-transform:uppercase;">${act.type}</span>
-      </div>
-    `;
-  }).join('');
-}
 
 // ==========================================================================
 // CHARTS & ANALYTICS (Milestone 7)
@@ -2887,18 +2854,6 @@ function runGlobalSearch(query) {
   return results;
 }
 
-// Barrier Gates
-function toggleBarrier(gateName, action) {
-  const el = document.getElementById(`${gateName}GateState`);
-  if (!el) return;
-  if (action === 'OPEN') {
-    el.innerHTML = `Status: <span style="color:var(--accent-primary);font-weight:700">MANUAL (RAISED)</span>`;
-    showToast(`${gateName.toUpperCase()} Barrier Raised`, 'success');
-  } else {
-    el.innerHTML = `Status: <span style="color:#38bdf8;font-weight:700">AUTO (LOWERED)</span>`;
-    showToast(`${gateName.toUpperCase()} Barrier Lowered`, 'info');
-  }
-}
 
 // Simulation Engine
 function toggleSimulation() {
@@ -2989,7 +2944,6 @@ if (typeof window !== 'undefined') {
   window.closeSlotDrawer            = closeSlotDrawer;
   window.processExitFromDrawer      = processExitFromDrawer;
   window.updateSurgeSimulator       = updateSurgeSimulator;
-  window.toggleBarrier              = toggleBarrier;
   window.openGlobalSearch           = openGlobalSearch;
   window.closeGlobalSearch          = closeGlobalSearch;
   window.runGlobalSearch            = runGlobalSearch;
