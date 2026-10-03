@@ -31,7 +31,6 @@ require('./booking-logic.js');
 require('./reservation-logic.js');
 require('./analytics.js');
 require('./storage.js');
-require('./simulation.js');
 
 let passedTests = 0;
 let totalTests = 0;
@@ -182,11 +181,6 @@ assert(analytics.totalServed >= 1, `Total vehicles served recorded (${analytics.
 assert(typeof analytics.avgOccupancy === 'number', `Average occupancy computed (${analytics.avgOccupancy}%)`);
 assert(typeof analytics.peakOccupancy === 'number', `Peak occupancy computed (${analytics.peakOccupancy}%)`);
 
-// 9. Simulation Engine
-console.log('\n9. Testing Simulation Tick Engine...');
-const simTick1 = runSimulationTick(testState);
-assert(simTick1 !== undefined, 'Simulation tick executed using real business logic functions');
-assert(testState.activityLog.length > 0, 'Simulation tick logged to activity feed');
 
 // 10. LocalStorage Serialization & Restoral
 console.log('\n10. Testing LocalStorage Persistence...');

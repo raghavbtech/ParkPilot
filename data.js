@@ -146,8 +146,33 @@ function createSeedLotsMap() {
   return lotsMap;
 }
 
+const CITY_PREFIXES = ['DL01', 'HR26', 'UP16', 'MH02', 'KA05', 'TN07'];
+const LETTERS = 'ABCDEFGHJKLMNPRSTUVWXYZ';
+
+function generateRandomPlate() {
+  const prefix = CITY_PREFIXES[Math.floor(Math.random() * CITY_PREFIXES.length)];
+  const letter1 = LETTERS[Math.floor(Math.random() * LETTERS.length)];
+  const letter2 = LETTERS[Math.floor(Math.random() * LETTERS.length)];
+  const digits = Math.floor(1000 + Math.random() * 9000);
+  return `${prefix}${letter1}${letter2}${digits}`;
+}
+
 if (typeof window !== 'undefined') {
   window.DEFAULT_CENTER_COORDS = DEFAULT_CENTER_COORDS;
   window.INITIAL_LOTS_CONFIG = INITIAL_LOTS_CONFIG;
   window.createSeedLotsMap = createSeedLotsMap;
+  window.generateRandomPlate = generateRandomPlate;
+}
+
+if (typeof global !== 'undefined') {
+  global.generateRandomPlate = generateRandomPlate;
+}
+
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = {
+    DEFAULT_CENTER_COORDS,
+    INITIAL_LOTS_CONFIG,
+    createSeedLotsMap,
+    generateRandomPlate
+  };
 }

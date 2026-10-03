@@ -28,15 +28,14 @@ This guide provides a concise summary of every major feature implemented in **Pa
 ---
 
 ## 3. Operations Cockpit & 3D Top-Down Bay Visualizer
-- **What it does:** A real-time facility visualizer showing occupied vs. vacant bays with distinct color-coding (Lime Green = Available, Crimson Red = Parked, Amber = Reserved). Includes environmental sensors (AQI, temperature, power draw).
+- **What it does:** A real-time facility visualizer showing occupied vs. vacant bays with distinct color-coding (Lime Green = Available, Crimson Red = Parked, Amber = Reserved).
 - **Key Functions:**
   - `renderTopDownParkingLot()` — in `app.js`
-  - `updateEnvironmentalWidget()` — in `app.js`
   - `updateCurrentParkedWidget()` — in `app.js`
 - **How to Demonstrate:**
   1. Open **`dashboard.html`**.
-  2. Click different lot tabs (`LOT-01`, `LOT-02`) to see the bays and environmental metrics update dynamically.
-  3. Click on any slot to open the **Slot Inspection Drawer** with live telemetry and fee accumulator.
+  2. Click different lot tabs (`LOT-01`, `LOT-02`) to see the bays and occupancy update dynamically.
+  3. Click on any slot to open the **Slot Inspection Drawer** with live session details and fee accumulator.
 
 ---
 
@@ -93,7 +92,7 @@ This guide provides a concise summary of every major feature implemented in **Pa
 ## 8. Role-Based Access Control & Vehicle Ownership Protection
 - **What it does:** 
   1. **Privilege Isolation**: Restricts administrative capabilities (registering facilities, administrative overrides) strictly to Super Admins.
-  2. **Vehicle Ownership & Protected Checkout**: A Regular User can observe all parking bays across the lot (full visibility of telemetry, occupancy rates, and slot maps), but **can only check out / exit their own vehicle** (`XY68ZTR`). If they view or attempt to exit a foreign vehicle, the checkout and barcode actions are locked behind a **Protected Vehicle Session** shield
+  2. **Vehicle Ownership & Protected Checkout**: A Regular User can observe all parking bays across the lot (full visibility of status, occupancy rates, and slot maps), but **can only check out / exit their own vehicle** (`XY68ZTR`). If they view or attempt to exit a foreign vehicle, the checkout and barcode actions are locked behind a **Protected Vehicle Session** shield
   3. **Super Admin Override**: Super Admins retain operator clearance to exit and manage any vehicle in any bay.
 - **Key Functions:**
   - `canUserCheckoutTicket(ticket, currentUser, currentUserRole)` — in `app.js`
@@ -125,5 +124,5 @@ This guide provides a concise summary of every major feature implemented in **Pa
 2. *"It uses the **Haversine formula** to calculate live GPS distances and assign the closest lot."*
 3. *"It features a **deterministic Best-Fit engine** ensuring SUVs and EVs get exact matching bays."*
 4. *"We implemented **Staff Reservations with interval collision detection** to prevent double-booking."*
-5. *"We built a **traffic simulation engine** with live events and **dynamic surge pricing**."*
+5. *"We built a **dynamic surge pricing & yield model** for peak hours."*
 6. *"The system enforces **Role-Based Access Control** (Admin vs. User) and maintains state across **modular pages** using `localStorage`."*

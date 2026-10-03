@@ -4,10 +4,6 @@
   <meta charset="UTF-8" />
   <script>
     (function () {
-      try {
-        var t = localStorage.getItem('PARKPILOT_THEME');
-        if (t) document.documentElement.setAttribute('data-theme', t);
-      } catch (e) { }
 
       window.quickLogin = function (role) {
         role = role || 'admin';
@@ -44,6 +40,9 @@
     })();
   </script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
@@ -83,12 +82,7 @@
           </svg>
         </a>
       </div>
-      <div class="ps-sidebar-bottom">
-        <button class="ps-icon-btn" onclick="window.toggleAppTheme()" title="Toggle Theme (Cyber Dark ⇋ Luxury Light)"
-          data-tooltip="Switch Theme">
-          <span class="themeToggleEmojiMulti" style="font-size: 16px;">🌓</span>
-        </button>
-      </div>
+
     </aside>
     <main class="ps-main-layout">
       <header class="ps-floating-topbar">
@@ -109,22 +103,7 @@
           </div>
         </div>
         <div class="ps-topbar-actions">
-          <div class="ps-sim-strip">
-            <button id="simToggleBtn" class="ps-sim-trigger" onclick="window.toggleSimulation()">
-              <span class="ps-sim-dot" id="simDot"></span>
-              <span id="simBtnLabel">Start Sim</span>
-            </button>
-            <select class="ps-sim-speed-select" onchange="window.changeSimulationSpeed(this.value)"
-              style="background:transparent;border:none;color:var(--text-muted);font-weight:700;font-size:11px;outline:none;cursor:pointer;">
-              <option value="1">1x</option>
-              <option value="2">2x</option>
-              <option value="5">5x</option>
-            </select>
-            <button class="ps-circle-action-btn" style="width:26px;height:26px;font-size:11px;"
-              onclick="window.triggerTrafficSpike()" title="Simulate Rush Hour Spike">⚡</button>
-            <button class="ps-circle-action-btn" style="width:26px;height:26px;font-size:11px;"
-              onclick="window.resetSystemState()" title="Reset State">↺</button>
-          </div>
+          <button class="ps-circle-action-btn" onclick="window.resetSystemState()" title="Reset State" style="font-size:12px;">↺</button>
           <button class="ps-circle-action-btn" onclick="window.openGlobalSearch()" title="Search (⌘K)">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
               <circle cx="11" cy="11" r="8" />
@@ -395,7 +374,6 @@
   <script src="reservation-logic.js?v=2.2"></script>
   <script src="analytics.js?v=2.2"></script>
   <script src="storage.js?v=2.2"></script>
-  <script src="simulation.js?v=2.2"></script>
   <script src="map.js?v=2.2"></script>
   <script src="app.js?v=2.2"></script>
 </body>

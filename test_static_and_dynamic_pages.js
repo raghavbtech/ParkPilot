@@ -160,7 +160,6 @@ require('./booking-logic.js');
 require('./reservation-logic.js');
 require('./storage.js');
 require('./analytics.js');
-require('./simulation.js');
 require('./map.js');
 require('./app.js');
 
@@ -326,11 +325,6 @@ check('updateSurgeSimulator computes fee yield with surge multipliers', () => {
   assert.strictEqual(window.appState.surgeMultiplier, 1.7);
 });
 
-// Feature 4.12: Live Traffic Spike Simulation
-check('triggerTrafficSpike simulates heavy load correctly', () => {
-  window.triggerTrafficSpike();
-  assert.ok(typeof window.triggerTrafficSpike === 'function');
-});
 
 // Feature 4.13: New Facility Creation (Admin only)
 check('submitNewLot registers a brand new parking lot into state', () => {
@@ -351,11 +345,10 @@ check('submitNewLot registers a brand new parking lot into state', () => {
   assert.strictEqual(window.appState.lots.size, lotCountBefore + 1, 'New facility successfully registered');
 });
 
-// Feature 4.14: Theme Toggling
-check('toggleAppTheme persists dark/light theme switch', () => {
-  const cur = document.documentElement.getAttribute('data-theme');
-  window.toggleAppTheme();
-  assert.notStrictEqual(document.documentElement.getAttribute('data-theme'), cur);
+// Feature 4.14: Permanent Dark Mode
+check('application defaults and maintains Cyber Dark theme', () => {
+  assert.strictEqual(document.documentElement.getAttribute('data-theme'), 'dark');
+  assert.strictEqual(window.appState.currentTheme, 'dark');
 });
 
 // ----------------------------------------------------

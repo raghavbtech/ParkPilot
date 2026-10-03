@@ -85,7 +85,6 @@ require('./booking-logic.js');
 require('./reservation-logic.js');
 require('./analytics.js');
 require('./storage.js');
-require('./simulation.js');
 require('./app.js');
 
 console.log('\n==========================================');

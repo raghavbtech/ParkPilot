@@ -6,7 +6,7 @@ const fs = require('fs');
 const path = require('path');
 
 const HTML_FILES = ['index.html', 'dashboard.html', 'slots.html', 'reservations.html', 'map.html', 'analytics.html', 'auth.html'];
-const JS_FILES = ['app.js','analytics.js','simulation.js','storage.js','booking-logic.js','reservation-logic.js','map.js','geolocation.js'];
+const JS_FILES = ['app.js','analytics.js','storage.js','booking-logic.js','reservation-logic.js','map.js','geolocation.js','data.js'];
 
 // Extract all id="..." from all HTML files
 const htmlIds = new Set();

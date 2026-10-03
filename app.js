@@ -128,8 +128,9 @@ function initApplicationState() {
     appState.currentView = 'landing';
   }
 
-  const savedTheme = (typeof localStorage !== 'undefined' && localStorage.getItem('PARKPILOT_THEME')) || appState.currentTheme || 'dark';
-  applyTheme(savedTheme, false);
+  if (typeof document !== 'undefined' && document.documentElement) {
+    document.documentElement.setAttribute('data-theme', 'dark');
+  }
 
   applyRoleUI();
   switchView(appState.currentView, false);
@@ -505,13 +506,11 @@ function applyRoleUI() {
   // Operator UI visibility
   const sidebar = document.querySelector('.ps-icon-sidebar');
   const navPills = document.querySelector('.ps-topbar-nav-pills');
-  const simStrip = document.querySelector('.ps-sim-strip');
   const btnAddNewLot = document.getElementById('btnAddNewLot');
   
   const inConsole = appState.currentView !== 'landing' && appState.currentView !== 'auth';
   if (sidebar) sidebar.style.display = inConsole ? 'flex' : 'none';
   if (navPills) navPills.style.display = inConsole ? 'flex' : 'none';
-  if (simStrip) simStrip.style.display = inConsole ? 'flex' : 'none';
   if (topbarUser) topbarUser.style.display = 'flex';
   
   // Only Super Admin can register new parking facilities
@@ -578,9 +577,47 @@ function updateDashboardGreeting() {
   }
 }
 
+function updateDashboardKPIs() {
+  if (typeof document === 'undefined') return;
+
+  let totalCap = 0;
+  let totalAvailable = 0;
+  let totalOccupied = 0;
+
+  if (appState.lots) {
+    for (const lot of appState.lots.values()) {
+      totalCap += (typeof lot.getTotalSlotsCount === 'function' ? lot.getTotalSlotsCount() : lot.slots?.size || 0);
+      totalAvailable += (typeof lot.getAvailableSlotsCount === 'function' ? lot.getAvailableSlotsCount() : 0);
+      totalOccupied += (typeof lot.getOccupiedSlotsCount === 'function' ? lot.getOccupiedSlotsCount() : 0);
+    }
+  }
+
+  // Calculate live dynamic revenue ($1,840 operational baseline + completed fees + active fees)
+  let revenue = 1840.00;
+  if (appState.parkingHistory && appState.parkingHistory.length > 0) {
+    appState.parkingHistory.forEach(h => {
+      revenue += (h.fee || 3.50);
+    });
+  }
+  if (appState.activeTickets) {
+    const now = Date.now();
+    for (const ticket of appState.activeTickets.values()) {
+      const entryMs = new Date(ticket.entryTime || now).getTime();
+      const mins = Math.max(15, Math.floor((now - entryMs) / 60000));
+      revenue += (mins / 60) * 3.50;
+    }
+  }
+
+  setText('kpiTotalCap', String(totalCap));
+  setText('kpiAvailableBays', String(totalAvailable));
+  setText('kpiOccupiedBays', String(totalOccupied));
+  setText('kpiTotalRevenue', `$${Math.round(revenue).toLocaleString('en-US')}`);
+}
+
 window.scrollToTop = scrollToTop;
 window.scrollToSection = scrollToSection;
 window.updateDashboardGreeting = updateDashboardGreeting;
+window.updateDashboardKPIs = updateDashboardKPIs;
 window.handleAuthClick = handleAuthClick;
 window.handleConsoleAccess = handleConsoleAccess;
 window.handleLogout = handleLogout;
@@ -700,9 +737,7 @@ function switchView(viewName, pushToHistory = false) {
     if (sidebar) sidebar.style.display = 'flex';
     if (topbar) topbar.style.display = 'flex';
     const navPills = document.querySelector('.ps-topbar-nav-pills');
-    const simStrip = document.querySelector('.ps-sim-strip');
     if (navPills) navPills.style.display = 'flex';
-    if (simStrip) simStrip.style.display = 'flex';
     if (mainLayout) {
       mainLayout.style.padding = '';
       mainLayout.style.justifyContent = '';
@@ -715,7 +750,6 @@ function switchView(viewName, pushToHistory = false) {
     if (typeof updateDashboardGreeting === 'function') updateDashboardGreeting();
     if (typeof renderTopDownParkingLot === 'function') renderTopDownParkingLot();
     if (typeof updateCurrentParkedWidget === 'function') updateCurrentParkedWidget();
-    if (typeof updateEnvironmentalWidget === 'function') updateEnvironmentalWidget();
   }
   
   if (viewName === 'slots') {
@@ -752,44 +786,7 @@ if (typeof window !== 'undefined' && typeof window.addEventListener === 'functio
   });
 }
 
-// ==========================================================================
-// THEME SWITCHER (img1.png Dark ⇋ img2.png Light)
-// ==========================================================================
-function applyTheme(theme, showNotification = false) {
-  const chosen = theme === 'light' ? 'light' : 'dark';
-  if (typeof document !== 'undefined' && document.documentElement) {
-    document.documentElement.setAttribute('data-theme', chosen);
-  }
-  appState.currentTheme = chosen;
-  try {
-    if (typeof localStorage !== 'undefined') {
-      localStorage.setItem('PARKPILOT_THEME', chosen);
-    }
-  } catch(e) {}
 
-  if (typeof document !== 'undefined') {
-    const emojis = document.querySelectorAll('.themeToggleEmojiMulti');
-    emojis.forEach(emoji => {
-      emoji.textContent = chosen === 'dark' ? '🌓' : '☀️';
-    });
-  }
-
-  if (showNotification) {
-    showToast(`Switched to ${chosen === 'dark' ? 'Cyber Dark HUD' : 'Luxury Light'} Theme`, 'info');
-  }
-  if (typeof renderAnalyticsCharts === 'function') {
-    renderAnalyticsCharts();
-  }
-  if (typeof saveToLocalStorage === 'function') {
-    saveToLocalStorage(appState);
-  }
-}
-
-function toggleAppTheme() {
-  const current = (typeof document !== 'undefined' && document.documentElement.getAttribute('data-theme')) || appState.currentTheme || 'dark';
-  const next = current === 'dark' ? 'light' : 'dark';
-  applyTheme(next, true);
-}
 
 // ==========================================================================
 // MASTER RENDER
@@ -802,31 +799,10 @@ function renderAll() {
   if (typeof renderParkingLotsList === 'function') renderParkingLotsList();
   renderLandingPage();
   updateCurrentParkedWidget();
-  updateEnvironmentalWidget();
   renderAnalyticsStats();
+  updateDashboardKPIs();
+  updateDashboardGreeting();
   syncMapMarkers(appState.lots, appState.selectedLotId, selectLot);
-}
-
-function updateEnvironmentalWidget() {
-  const lot = appState.lots.get(appState.selectedLotId);
-  if (!lot) return;
-
-  setText('envFacilityBadge', lot.id);
-
-  // Climate & AQI based on lot characteristics (Underground vs Outdoor)
-  const isUnderground = lot.id === 'LOT-01' || lot.id === 'LOT-03';
-  if (isUnderground) {
-    setText('envTemperatureVal', '21°C · AQI 28 🌿 Clean');
-  } else {
-    setText('envTemperatureVal', '25°C · Sunny ☀️ Ambient');
-  }
-
-  // EV Grid Load based on active charging vehicles in this lot
-  const evChargingCount = Array.from(lot.slots.values()).filter(s => s.type === 'ev' && s.isOccupied).length;
-  const kw = evChargingCount * 11;
-  setText('envGridLoadVal', kw > 0 ? `⚡ ${kw} kW Active Draw` : '⚡ 0 kW (Standby)');
-
-
 }
 
 function updateCurrentParkedWidget() {
@@ -1031,9 +1007,9 @@ function renderTopDownParkingLot() {
     let isCompat = true;
     if (cat !== 'all') {
       if (cat === 'ev-car') isCompat = slot.type === 'ev';
-      else if (cat === 'car') isCompat = (slot.size === 'car' || slot.size === 'suv') && slot.type !== 'staff';
-      else if (cat === 'suv') isCompat = slot.size === 'suv' && slot.type !== 'staff';
-      else if (cat === 'bike') isCompat = slot.size === 'bike' && slot.type !== 'staff';
+      else if (cat === 'car') isCompat = (slot.size === 'car' || slot.size === 'suv') && slot.type !== 'staff' && slot.type !== 'ev';
+      else if (cat === 'suv') isCompat = slot.size === 'suv' && slot.type !== 'staff' && slot.type !== 'ev';
+      else if (cat === 'bike') isCompat = slot.size === 'bike' && slot.type !== 'staff' && slot.type !== 'ev';
     }
     const catClass = cat === 'all' ? '' : (isCompat ? 'highlight-compat' : 'dimmed-compat');
 
@@ -1144,13 +1120,13 @@ function selectDashboardCategory(cat, btn) {
       count = slots.filter(s => s.type === 'ev' && s.isAvailable()).length;
       setText('categoryCountBadge', `${count} EV Chargers Free`);
     } else if (cat === 'suv') {
-      count = slots.filter(s => s.size === 'suv' && s.isAvailable() && s.type !== 'staff').length;
+      count = slots.filter(s => s.size === 'suv' && s.isAvailable() && s.type !== 'staff' && s.type !== 'ev').length;
       setText('categoryCountBadge', `${count} SUV Bays Free`);
     } else if (cat === 'bike') {
-      count = slots.filter(s => s.size === 'bike' && s.isAvailable() && s.type !== 'staff').length;
+      count = slots.filter(s => s.size === 'bike' && s.isAvailable() && s.type !== 'staff' && s.type !== 'ev').length;
       setText('categoryCountBadge', `${count} Bike Bays Free`);
     } else {
-      count = slots.filter(s => (s.size === 'car' || s.size === 'suv') && s.isAvailable() && s.type !== 'staff').length;
+      count = slots.filter(s => (s.size === 'car' || s.size === 'suv') && s.isAvailable() && s.type !== 'staff' && s.type !== 'ev').length;
       setText('categoryCountBadge', `${count} Car Bays Free`);
     }
   }
@@ -1547,7 +1523,7 @@ function openSlotDrawer(slotId, lotId) {
             <span>🔒</span> Protected Vehicle Session
           </div>
           <div style="font-size:12px;color:var(--text-muted);line-height:1.4;">
-            This vehicle is registered to driver <strong>${ticketOwner}</strong>. As a standard user, you can view live telemetry and bay occupancy, but departure checkout and barcode printing are restricted to the registered vehicle owner or Super Admin.
+            This vehicle is registered to driver <strong>${ticketOwner}</strong>. As a standard user, you can view live session info and bay occupancy, but departure checkout and barcode printing are restricted to the registered vehicle owner or Super Admin.
           </div>
           <div style="font-size:11px;color:var(--text-muted);opacity:0.85;">
             💡 Switch to <strong>Super Admin</strong> in the top-right profile menu to test administrative override.
@@ -1557,7 +1533,7 @@ function openSlotDrawer(slotId, lotId) {
       bodyEl.innerHTML = `
         <div style="background:rgba(255,255,255,0.025);border:1px solid var(--line);padding:16px;border-radius:10px;display:flex;flex-direction:column;gap:10px;">
           <div style="display:flex;justify-content:space-between;align-items:center;">
-            <span style="font-size:11px;font-weight:800;color:var(--accent-primary);text-transform:uppercase;">Live Session Telemetry</span>
+            <span style="font-size:11px;font-weight:800;color:var(--accent-primary);text-transform:uppercase;">Live Session Details</span>
             ${ownerBadge}
           </div>
           <div style="display:flex;justify-content:space-between;font-size:13px;"><span>Vehicle</span><strong>${vehicleDesc}</strong></div>
@@ -1594,7 +1570,7 @@ function openSlotDrawer(slotId, lotId) {
       bodyEl.innerHTML = `
         <div style="background:var(--bg-card-subtle);padding:16px;border-radius:10px;display:flex;flex-direction:column;gap:10px;">
           <div style="display:flex;justify-content:space-between;align-items:center;">
-            <span style="font-size:11px;font-weight:800;color:var(--accent-primary);text-transform:uppercase;">Bay Telemetry</span>
+            <span style="font-size:11px;font-weight:800;color:var(--accent-primary);text-transform:uppercase;">Bay Details</span>
             <span style="font-size:11px;font-weight:700;color:var(--text-muted);background:var(--bg-surface);padding:2px 8px;border-radius:999px;">${slot.size.toUpperCase()} · STAFF</span>
           </div>
           <div style="display:flex;justify-content:space-between;font-size:13px;"><span>Status</span><strong>Dedicated Staff Bay</strong></div>
@@ -1610,7 +1586,7 @@ function openSlotDrawer(slotId, lotId) {
       bodyEl.innerHTML = `
         <div style="background:var(--bg-card-subtle);padding:16px;border-radius:10px;display:flex;flex-direction:column;gap:10px;">
           <div style="display:flex;justify-content:space-between;align-items:center;">
-            <span style="font-size:11px;font-weight:800;color:var(--accent-primary);text-transform:uppercase;">Bay Telemetry</span>
+            <span style="font-size:11px;font-weight:800;color:var(--accent-primary);text-transform:uppercase;">Bay Details</span>
             <span style="font-size:11px;font-weight:700;color:var(--accent-green);background:rgba(16,185,129,0.15);border:1px solid rgba(16,185,129,0.3);padding:2px 8px;border-radius:999px;">🟢 VACANT & AVAILABLE</span>
           </div>
           <div style="display:flex;justify-content:space-between;font-size:13px;"><span>Selected Window</span><strong style="color:var(--accent-blue)">${windowStr}</strong></div>
@@ -1845,7 +1821,8 @@ function renderReservationsTable() {
 // ==========================================================================
 function renderAnalyticsStats() {
   const summary = getAnalyticsSummary(appState, appState.surgeMultiplier);
-  setText('statVehiclesServed', `${summary.totalServed}`);
+  const completedDepartures = appState.parkingHistory ? appState.parkingHistory.length : 0;
+  setText('statVehiclesServed', `${completedDepartures} Departed (${summary.totalServed} Total)`);
   setText('statAvgOccupancy', `${summary.avgOccupancy}%`);
   setText('statPeakOccupancy', `${summary.peakOccupancy}%`);
   setText('statBusiestLot', summary.busiestLotName);
@@ -1878,7 +1855,7 @@ function draw24HourChart(hourlyProfile) {
   const chartW = w - padL - padR;
   const chartH = h - padT - padB;
 
-  ctx.strokeStyle = appState.currentTheme === 'dark' ? 'rgba(255,255,255,0.06)' : '#e2e8f0';
+  ctx.strokeStyle = 'rgba(255,255,255,0.06)';
   ctx.lineWidth = 1;
   for (let i = 0; i <= 4; i++) {
     const y = padT + (chartH / 4) * i;
@@ -1899,10 +1876,10 @@ function draw24HourChart(hourlyProfile) {
     pt
   }));
 
-  const primaryColor = appState.currentTheme === 'dark' ? '#ccff00' : '#e5a93c';
+  const primaryColor = '#ccff00';
 
   const grad = ctx.createLinearGradient(0, padT, 0, padT + chartH);
-  grad.addColorStop(0, appState.currentTheme === 'dark' ? 'rgba(204,255,0,0.3)' : 'rgba(229,169,60,0.3)');
+  grad.addColorStop(0, 'rgba(204,255,0,0.3)');
   grad.addColorStop(1, 'rgba(0,0,0,0)');
 
   ctx.beginPath();
@@ -1962,7 +1939,7 @@ function drawDonutChart(breakdown) {
     start += angle;
   });
 
-  ctx.fillStyle = appState.currentTheme === 'dark' ? '#ffffff' : '#0f172a';
+  ctx.fillStyle = '#ffffff';
   ctx.font = 'bold 15px Plus Jakarta Sans';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
@@ -2056,7 +2033,10 @@ function handleModalParkSubmit() {
 
   const vehicle = new Vehicle(plate, type);
   if (appState.activeVehicleNumbers.has(vehicle.number)) {
-    showToast(`Vehicle ${vehicle.number} is already active!`, 'error');
+    showToast(`Duplicate Entry: Vehicle ${vehicle.number} is already active in the network!`, 'error');
+    if (typeof alert === 'function') {
+      alert(`⚠️ Duplicate Entry Error:\n\nVehicle ${vehicle.number} is already marked as active in the parking network!\nPlease enter a different license plate or process departure for the existing vehicle first.`);
+    }
     return;
   }
 
@@ -2119,9 +2099,15 @@ function handleStaffReservationSubmit() {
   const slotId   = document.getElementById('staffSlotSelect')?.value;
   const startStr = document.getElementById('staffStartTime')?.value;
   const endStr   = document.getElementById('staffEndTime')?.value;
+  const alertBox = document.getElementById('staffConflictAlert');
+  const alertMsg = document.getElementById('staffConflictText');
 
   if (!staffId || !lotId || !slotId || !startStr || !endStr) {
-    showToast('Please fill all fields.', 'error');
+    showToast('Please fill all reservation fields.', 'error');
+    if (alertBox && alertMsg) {
+      alertBox.style.display = 'block';
+      alertMsg.textContent = 'Please fill all required fields before confirming booking.';
+    }
     return;
   }
 
@@ -2130,7 +2116,12 @@ function handleStaffReservationSubmit() {
   const endISO   = new Date(`${today}T${endStr}`).toISOString();
 
   if (new Date(endISO) <= new Date(startISO)) {
-    showToast('End time must be after start time.', 'error');
+    const msg = `End time (${endStr}) must be after start time (${startStr}).`;
+    showToast(msg, 'error');
+    if (alertBox && alertMsg) {
+      alertBox.style.display = 'block';
+      alertMsg.textContent = msg;
+    }
     return;
   }
 
@@ -2138,10 +2129,15 @@ function handleStaffReservationSubmit() {
     const res = reserveStaffSlot(lotId, slotId, staffId, startISO, endISO, appState);
     saveToLocalStorage(appState);
     renderAll();
-    showToast(`Staff Booking ${res.id} confirmed for ${slotId}`, 'success');
-    document.getElementById('staffConflictAlert')?.style.setProperty('display', 'none');
+    showToast(`✓ Staff Booking ${res.id} confirmed for ${slotId}`, 'success');
+    if (alertBox) alertBox.style.display = 'none';
   } catch (err) {
-    showToast(err.message, 'error');
+    const errText = err.message || 'Time collision detected! Bay already reserved.';
+    if (alertBox && alertMsg) {
+      alertBox.style.display = 'block';
+      alertMsg.textContent = errText;
+    }
+    showToast(errText, 'error');
   }
 }
 
@@ -2251,13 +2247,24 @@ function updateNewLotTotalCapacity() {
   if (badge) badge.textContent = `Total: ${total} Bays`;
 }
 
-function fillLotCurrentCoords() {
-  if (appState.userCoords) {
-    const latInput = document.getElementById('clLat');
-    const lngInput = document.getElementById('clLng');
-    if (latInput) latInput.value = appState.userCoords.lat.toFixed(4);
-    if (lngInput) lngInput.value = appState.userCoords.lng.toFixed(4);
-    showToast('Applied current GPS coordinates', 'info');
+async function fillLotCurrentCoords() {
+  const latInput = document.getElementById('clLat');
+  const lngInput = document.getElementById('clLng');
+  showToast('Resolving GPS coordinates...', 'info');
+
+  try {
+    const coords = (appState.userCoords && !appState.userCoords.isFallback)
+      ? appState.userCoords
+      : await getUserCoordinates();
+    appState.userCoords = coords;
+
+    if (latInput) latInput.value = coords.lat.toFixed(4);
+    if (lngInput) lngInput.value = coords.lng.toFixed(4);
+    showToast(`📍 Applied GPS: ${coords.lat.toFixed(4)}°N, ${coords.lng.toFixed(4)}°E`, 'success');
+  } catch (err) {
+    if (latInput && !latInput.value) latInput.value = '28.6139';
+    if (lngInput && !lngInput.value) lngInput.value = '77.2090';
+    showToast('Applied default City Center GPS coordinates', 'info');
   }
 }
 
@@ -2486,13 +2493,15 @@ function renderParkingLotsList() {
       : 1.0;
 
     return `
-      <div class="ps-lot-crud-card ${isSelected ? 'selected' : ''}" style="background:var(--bg-card-subtle);border:1px solid ${isSelected ? 'var(--accent-primary)' : 'var(--border-subtle)'};border-radius:10px;padding:16px;display:flex;flex-direction:column;gap:12px;transition:border-color 0.2s ease;">
+      <div class="ps-lot-crud-card ${isSelected ? 'selected' : ''}" onclick="window.selectLot('${lot.id}')"
+           style="cursor:pointer;background:var(--bg-card-subtle);border:${isSelected ? '2px solid var(--accent-primary, #ccff00)' : '1px solid var(--border-subtle)'};${isSelected ? 'box-shadow: 0 0 25px rgba(204,255,0,0.18); background: rgba(204,255,0,0.03);' : ''}border-radius:12px;padding:18px;display:flex;flex-direction:column;gap:12px;transition:all 0.2s ease;">
         <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">
           <div>
-            <div style="display:flex;align-items:center;gap:8px;">
+            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
               <span style="font-size:18px;">🏢</span>
               <strong style="font-size:16px;color:var(--text-main);">${lot.name}</strong>
               <span style="font-size:10px;font-family:var(--font-mono);background:rgba(255,255,255,0.06);border:1px solid var(--line);padding:2px 6px;border-radius:4px;color:var(--accent-primary);">${lot.id}</span>
+              ${isSelected ? `<span style="font-size:10px;font-weight:800;color:var(--accent-primary);background:rgba(204,255,0,0.14);border:1px solid var(--accent-primary);padding:2px 7px;border-radius:4px;">● ACTIVE FACILITY</span>` : ''}
             </div>
             <p style="margin:4px 0 0;font-size:11.5px;color:var(--text-muted);">${lot.address || 'Metro Sector, Bengaluru'}</p>
           </div>
@@ -2537,13 +2546,16 @@ function renderParkingLotsList() {
 
         <!-- Actions Toolbar -->
         <div style="display:flex;gap:8px;border-top:1px solid var(--border-subtle);padding-top:10px;margin-top:2px;">
-          <button class="btn btn-outline" style="flex:1.2;font-size:11px;padding:6px 10px;justify-content:center;" onclick="window.selectLot('${lot.id}')">
-            👁️ View Bays Matrix
+          <button class="btn btn-outline" style="flex:1.2;font-size:11px;padding:7px 10px;justify-content:center;${isSelected ? 'border-color:var(--accent-primary);color:var(--accent-primary);font-weight:800;' : ''}"
+                  onclick="event.stopPropagation(); window.selectLot('${lot.id}'); document.getElementById('bayColCenter')?.scrollIntoView({behavior:'smooth'});">
+            ${isSelected ? '✓ Active Bay Matrix' : '👁️ View Bays Matrix'}
           </button>
-          <button class="btn btn-outline" style="flex:1;font-size:11px;padding:6px 10px;justify-content:center;" onclick="window.openEditLotModal('${lot.id}')">
+          <button class="btn btn-outline" style="flex:1;font-size:11px;padding:7px 10px;justify-content:center;"
+                  onclick="event.stopPropagation(); window.openEditLotModal('${lot.id}')">
             ✏️ Edit Lot
           </button>
-          <button class="btn btn-danger" style="font-size:11px;padding:6px 10px;justify-content:center;" onclick="window.deleteLot('${lot.id}')" title="Delete Facility">
+          <button class="btn btn-danger" style="font-size:11px;padding:7px 10px;justify-content:center;"
+                  onclick="event.stopPropagation(); window.deleteLot('${lot.id}')" title="Delete Facility">
             🗑️ Delete
           </button>
         </div>
@@ -2656,7 +2668,10 @@ function submitEditReservation() {
   const newEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate(), eParts[0], eParts[1], 0, 0);
 
   if (newStart >= newEnd) {
-    showToast('Start time must be before end time', 'error');
+    showToast(`Invalid Interval: Start time (${sVal}) must be before end time (${eVal}).`, 'error');
+    if (typeof alert === 'function') {
+      alert(`⚠️ Invalid Interval:\n\nStart time (${sVal}) must be earlier than end time (${eVal}).\nPlease adjust the time window.`);
+    }
     return;
   }
 
@@ -2664,48 +2679,57 @@ function submitEditReservation() {
   for (const otherRes of appState.reservations.values()) {
     if (otherRes.id !== res.id && otherRes.lotId === lotId && otherRes.slotId === slotId && otherRes.status === 'reserved') {
       if (typeof hasOverlap === 'function' && hasOverlap(newStart, newEnd, otherRes.startTime, otherRes.endTime)) {
-        showToast(`Collision: Slot ${slotId} is reserved by ${otherRes.staffId} during that interval.`, 'error');
+        const fromStr = new Date(otherRes.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        const toStr = new Date(otherRes.endTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        showToast(`Collision: Slot ${slotId} is already booked by ${otherRes.staffId} (${fromStr} - ${toStr}).`, 'error');
+        if (typeof alert === 'function') {
+          alert(`⚠️ Interval Collision Detected:\n\nBay ${slotId} is already booked by ${otherRes.staffId} from ${fromStr} to ${toStr}.\nPlease pick a different bay or time window.`);
+        }
         return;
       }
     }
   }
 
-  // Release previous slot if changed
-  if (res.lotId !== lotId || res.slotId !== slotId) {
-    const oldLot = appState.lots.get(res.lotId);
-    if (oldLot) {
-      const oldSlot = oldLot.getSlot(res.slotId);
-      if (oldSlot && (oldSlot.reservedFor === res.staffId || (oldSlot.reservationWindow && oldSlot.reservationWindow.reservationId === res.id))) {
-        oldSlot.reservedFor = null;
-        oldSlot.reservationWindow = null;
+  try {
+    // Release previous slot if changed
+    if (res.lotId !== lotId || res.slotId !== slotId) {
+      const oldLot = appState.lots.get(res.lotId);
+      if (oldLot) {
+        const oldSlot = oldLot.getSlot(res.slotId);
+        if (oldSlot && (oldSlot.reservedFor === res.staffId || (oldSlot.reservationWindow && oldSlot.reservationWindow.reservationId === res.id))) {
+          oldSlot.reservedFor = null;
+          oldSlot.reservationWindow = null;
+        }
       }
     }
-  }
 
-  res.staffId = staffId;
-  res.lotId = lotId;
-  res.slotId = slotId;
-  res.startTime = newStart.toISOString();
-  res.endTime = newEnd.toISOString();
+    res.staffId = staffId;
+    res.lotId = lotId;
+    res.slotId = slotId;
+    res.startTime = newStart.toISOString();
+    res.endTime = newEnd.toISOString();
 
-  // Assign new slot
-  const newLot = appState.lots.get(lotId);
-  if (newLot) {
-    const newSlot = newLot.getSlot(slotId);
-    if (newSlot) {
-      newSlot.reservedFor = staffId;
-      newSlot.reservationWindow = {
-        startTime: res.startTime,
-        endTime: res.endTime,
-        reservationId: res.id
-      };
+    // Assign new slot
+    const newLot = appState.lots.get(lotId);
+    if (newLot) {
+      const newSlot = newLot.getSlot(slotId);
+      if (newSlot) {
+        newSlot.reservedFor = staffId;
+        newSlot.reservationWindow = {
+          startTime: res.startTime,
+          endTime: res.endTime,
+          reservationId: res.id
+        };
+      }
     }
-  }
 
-  saveToLocalStorage(appState);
-  renderAll();
-  closeEditReservationModal();
-  showToast(`Reservation ${res.id} updated successfully!`, 'success');
+    saveToLocalStorage(appState);
+    renderAll();
+    closeEditReservationModal();
+    showToast(`✓ Reservation ${res.id} updated successfully!`, 'success');
+  } catch (err) {
+    showToast(`Failed to update reservation: ${err.message}`, 'error');
+  }
 }
 
 function cancelReservation(resId) {
@@ -2806,36 +2830,56 @@ function runGlobalSearch(query) {
   const container = document.getElementById('globalSearchResults');
 
   if (!query || !query.trim()) {
-    if (container) container.innerHTML = '<div style="padding:16px;text-align:center;color:var(--text-muted)">Type a license plate, slot ID or facility name...</div>';
+    if (container) container.innerHTML = '<div style="padding:16px;text-align:center;color:var(--text-muted)">Type a license plate, slot ID (e.g. CM-C01), or keyword...</div>';
     return [];
   }
 
-  const q = query.toLowerCase();
+  const q = query.toLowerCase().trim();
   const results = [];
 
+  // Match keyword for all active vehicles
+  const isMatchAllActive = ['active', 'parked', 'vehicles', 'vehicle', 'cars', 'occupied'].some(term => q.includes(term));
+
+  // 1. Search Active Tickets & Vehicles
   for (const t of appState.activeTickets.values()) {
     const plate = t.vehicle?.number || '';
-    if (plate.toLowerCase().includes(q) || t.id.toLowerCase().includes(q) || t.slotId.toLowerCase().includes(q)) {
+    const lotName = appState.lots.get(t.lotId)?.name || t.lotId;
+    if (isMatchAllActive || plate.toLowerCase().includes(q) || t.id.toLowerCase().includes(q) || t.slotId.toLowerCase().includes(q) || (t.vehicle?.type && t.vehicle.type.toLowerCase().includes(q))) {
       results.push({
-        title: `${plate} — ${t.id}`,
-        sub: `Parked at ${appState.lots.get(t.lotId)?.name} [Bay ${t.slotId}]`,
-        action: () => { closeGlobalSearch(); openSlotDrawer(t.slotId, t.lotId); }
+        title: `🚗 ${plate} — ${t.id}`,
+        sub: `Active Parked at ${lotName} [Bay ${t.slotId}]`,
+        action: () => { closeGlobalSearch(); selectLot(t.lotId); openSlotDrawer(t.slotId, t.lotId); }
       });
     }
   }
 
+  // 2. Search across ALL slots in all facilities (vacant or occupied)
   for (const lot of appState.lots.values()) {
-    if (lot.name.toLowerCase().includes(q) || lot.id.toLowerCase().includes(q)) {
+    for (const slot of lot.slots.values()) {
+      if (slot.id.toLowerCase().includes(q) && !results.some(r => r.sub && r.sub.includes(`[Bay ${slot.id}]`))) {
+        const statusText = slot.isOccupied ? `🔴 Occupied by ${slot.currentVehicle?.number || 'Vehicle'}` : '🟢 Available';
+        results.push({
+          title: `🅿️ Bay ${slot.id} (${slot.type.toUpperCase()} · ${slot.size.toUpperCase()})`,
+          sub: `${statusText} at ${lot.name}`,
+          action: () => { closeGlobalSearch(); selectLot(lot.id); openSlotDrawer(slot.id, lot.id); }
+        });
+      }
+    }
+  }
+
+  // 3. Search Facilities by Name, ID, or Address
+  for (const lot of appState.lots.values()) {
+    if (lot.name.toLowerCase().includes(q) || lot.id.toLowerCase().includes(q) || (lot.address && lot.address.toLowerCase().includes(q))) {
       results.push({
-        title: lot.name,
-        sub: `${lot.getAvailableSlotsCount()} free bays • ${lot.address}`,
+        title: `🏢 ${lot.name}`,
+        sub: `${lot.getAvailableSlotsCount()} free bays • ${lot.address || 'Metro Sector'}`,
         action: () => { closeGlobalSearch(); selectLot(lot.id); switchView('dashboard'); }
       });
     }
   }
 
   if (results.length === 0) {
-    if (container) container.innerHTML = `<div style="padding:16px;text-align:center;color:var(--text-muted)">No matching records found.</div>`;
+    if (container) container.innerHTML = `<div style="padding:16px;text-align:center;color:var(--text-muted)">No matching records found for "${query}".</div>`;
     return results;
   }
 
@@ -2854,49 +2898,14 @@ function runGlobalSearch(query) {
   return results;
 }
 
-
-// Simulation Engine
-function toggleSimulation() {
-  const btn  = document.getElementById('simToggleBtn');
-  const label= document.getElementById('simBtnLabel');
-
-  if (isSimulationRunning()) {
-    stopSimulation();
-    btn?.classList.remove('active');
-    if (label) label.textContent = 'Start Sim';
-    showToast('Simulation paused.', 'info');
-  } else {
-    startSimulation(appState, (eventResult, state) => {
-      saveToLocalStorage(state);
-      renderAll();
-      if (appState.currentView === 'analytics') renderAnalyticsCharts();
-    }, 2800);
-    btn?.classList.add('active');
-    if (label) label.textContent = 'Sim Running';
-    showToast('Simulation running live…', 'success');
-  }
-}
-
-function changeSimulationSpeed(mult) {
-  setSimulationSpeed(parseFloat(mult) || 1);
-  showToast(`Simulation speed: ${mult}x`, 'info');
-}
-
-function triggerTrafficSpike() {
-  simulateTrafficSpike(4, appState, (e, state) => {
-    saveToLocalStorage(state);
-    renderAll();
-  });
-  showToast('⚡ Traffic spike simulated (4 arrivals)', 'info');
-}
-
 function resetSystemState() {
   if (!confirm('Reset all parking data to initial seed state?')) return;
-  stopSimulation();
   clearLocalStorageState();
   seedInitialState();
   renderAll();
-  showToast('System state reset successfully', 'info');
+  updateDashboardKPIs();
+  updateDashboardGreeting();
+  showToast('✓ System state reset successfully to defaults.', 'info');
 }
 
 // Toast & Notifications
@@ -2931,7 +2940,6 @@ if (typeof window !== 'undefined') {
   window.showToast                  = showToast;
   window.notify                     = notify;
   window.switchView                 = switchView;
-  window.toggleAppTheme             = toggleAppTheme;
   window.selectLot                  = selectLot;
   window.selectLotAndOpenConsole    = selectLotAndOpenConsole;
   window.selectLandingVType         = selectLandingVType;
@@ -2952,9 +2960,6 @@ if (typeof window !== 'undefined') {
   window.handleProcessExit          = handleProcessExit;
   window.closeModal                 = closeModal;
   window.openQuickParkModal         = openQuickParkModal;
-  window.toggleSimulation           = toggleSimulation;
-  window.changeSimulationSpeed      = changeSimulationSpeed;
-  window.triggerTrafficSpike        = triggerTrafficSpike;
   window.resetSystemState           = resetSystemState;
   window.printTicket                = printTicket;
   window.resolveUserLocation        = resolveUserLocation;
@@ -2987,6 +2992,8 @@ if (typeof window !== 'undefined') {
   window.cancelReservation          = cancelReservation;
   window.deleteReservation          = cancelReservation;
   window.renderAll                  = renderAll;
+  window.renderAnalyticsStats       = renderAnalyticsStats;
+  window.renderAnalyticsCharts      = renderAnalyticsCharts;
   window.seedInitialState           = seedInitialState;
   window.canUserCheckoutTicket      = canUserCheckoutTicket;
   window.updateLandingRecommendationPreview = updateLandingRecommendationPreview;

@@ -4,10 +4,6 @@
   <meta charset="UTF-8" />
   <script>
     (function () {
-      try {
-        var t = localStorage.getItem('PARKPILOT_THEME');
-        if (t) document.documentElement.setAttribute('data-theme', t);
-      } catch (e) { }
 
       window.quickLogin = function (role) {
         role = role || 'admin';
@@ -44,6 +40,9 @@
     })();
   </script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
@@ -83,12 +82,7 @@
           </svg>
         </a>
       </div>
-      <div class="ps-sidebar-bottom">
-        <button class="ps-icon-btn" onclick="window.toggleAppTheme()" title="Toggle Theme (Cyber Dark ⇋ Luxury Light)"
-          data-tooltip="Switch Theme">
-          <span class="themeToggleEmojiMulti" style="font-size: 16px;">🌓</span>
-        </button>
-      </div>
+
     </aside>
     <main class="ps-main-layout">
       <header class="ps-floating-topbar">
@@ -109,22 +103,7 @@
           </div>
         </div>
         <div class="ps-topbar-actions">
-          <div class="ps-sim-strip">
-            <button id="simToggleBtn" class="ps-sim-trigger" onclick="window.toggleSimulation()">
-              <span class="ps-sim-dot" id="simDot"></span>
-              <span id="simBtnLabel">Start Sim</span>
-            </button>
-            <select class="ps-sim-speed-select" onchange="window.changeSimulationSpeed(this.value)"
-              style="background:transparent;border:none;color:var(--text-muted);font-weight:700;font-size:11px;outline:none;cursor:pointer;">
-              <option value="1">1x</option>
-              <option value="2">2x</option>
-              <option value="5">5x</option>
-            </select>
-            <button class="ps-circle-action-btn" style="width:26px;height:26px;font-size:11px;"
-              onclick="window.triggerTrafficSpike()" title="Simulate Rush Hour Spike">⚡</button>
-            <button class="ps-circle-action-btn" style="width:26px;height:26px;font-size:11px;"
-              onclick="window.resetSystemState()" title="Reset State">↺</button>
-          </div>
+          <button class="ps-circle-action-btn" onclick="window.resetSystemState()" title="Reset State" style="font-size:12px;">↺</button>
           <button class="ps-circle-action-btn" onclick="window.openGlobalSearch()" title="Search (⌘K)">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
               <circle cx="11" cy="11" r="8" />
@@ -183,7 +162,7 @@
             </div>
             <span>OCCUPIED</span>
             <strong id="kpiOccupiedBays">31</strong>
-            <small style="color:var(--rose)">Live telemetry</small>
+            <small style="color:var(--rose)">Real-time</small>
           </div>
           <div class="kpi">
             <div class="kpi-icon">
@@ -279,40 +258,7 @@
                 <span class="ps-road-arrow">^</span>
               </div>
 
-              <!-- Speedometer & Telemetry Arcs SVG (Matching img1.png) -->
-              <svg class="ps-gauge-arc-svg" viewBox="0 0 500 320" preserveAspectRatio="none">
-                <!-- Left Speedometer Arc & Ticks -->
-                <g class="hud-gauge-left-group">
-                  <path d="M 125 45 A 140 140 0 0 0 65 270" fill="none" stroke="rgba(255,255,255,0.18)" stroke-width="2" stroke-linecap="round" />
-                  <path d="M 67 245 A 140 140 0 0 1 82 175" fill="none" stroke="var(--lime)" stroke-width="4.5" stroke-linecap="round" />
-                  <text x="142" y="52" font-size="11" font-family="var(--mono)" font-weight="700" fill="rgba(255,255,255,0.45)">160</text>
-                  <text x="70" y="130" font-size="16" font-family="var(--mono)" font-weight="800" fill="rgba(255,255,255,0.3)">01</text>
-                  <text x="110" y="148" font-size="11" font-family="var(--mono)" font-weight="700" fill="rgba(255,255,255,0.45)">02</text>
-                  <text x="56" y="280" font-size="11" font-family="var(--mono)" font-weight="700" fill="rgba(255,255,255,0.45)">0</text>
-                </g>
 
-                <!-- Right Power/Efficiency Arc & Ticks -->
-                <g class="hud-gauge-right-group">
-                  <path d="M 375 45 A 140 140 0 0 1 435 270" fill="none" stroke="rgba(255,255,255,0.18)" stroke-width="2" stroke-linecap="round" />
-                  <line x1="430" y1="210" x2="446" y2="204" stroke="var(--lime)" stroke-width="4" stroke-linecap="round" />
-                  <text x="345" y="52" font-size="11" font-family="var(--mono)" font-weight="700" fill="rgba(255,255,255,0.45)">300</text>
-                  <text x="412" y="130" font-size="16" font-family="var(--mono)" font-weight="800" fill="rgba(255,255,255,0.3)">10</text>
-                  <text x="372" y="148" font-size="11" font-family="var(--mono)" font-weight="700" fill="rgba(255,255,255,0.45)">09</text>
-                  <text x="444" y="215" font-size="10" font-family="var(--mono)" font-weight="700" fill="var(--lime)">kW</text>
-                  <text x="424" y="280" font-size="11" font-family="var(--mono)" font-weight="700" fill="rgba(255,255,255,0.45)">-50</text>
-                </g>
-              </svg>
-
-              <!-- HUD Gauge Numerical Readouts -->
-              <div class="ps-hud-gauge-left">
-                <div class="ps-gauge-val" id="hudSpeed">10</div>
-                <div class="ps-gauge-unit">mph</div>
-              </div>
-
-              <div class="ps-hud-gauge-right">
-                <div class="ps-gauge-val" id="hudEnergy">280</div>
-                <div class="ps-gauge-unit">Avg Wh/mi</div>
-              </div>
             </div>
 
             <!-- Cockpit Footer: Instant Reservation CTA Button -->
@@ -328,24 +274,7 @@
         <!-- BOTTOM ROW CARDS: Environmental Info + Current Parked + Nearby Options (From img2.png) -->
         <div class="ps-bottom-cards-grid">
 
-          <!-- Card 1: Environmental Info (from img2.png) -->
-          <div class="ps-env-card">
-            <div style="display:flex;justify-content:space-between;align-items:center;">
-              <span style="font-size:15px;font-weight:800;color:var(--text-main);">Environmental Info</span>
-              <span id="envFacilityBadge"
-                style="font-size:10px;font-weight:800;color:var(--accent-primary);background:var(--bg-card-subtle);padding:2px 8px;border-radius:999px;">LOT-01</span>
-            </div>
-            <div class="ps-env-stat-box">
-              <span style="font-weight:700;color:var(--text-body);">Facility Climate</span>
-              <span style="font-family:var(--font-mono);font-size:14px;font-weight:800;color:var(--accent-primary)"
-                id="envTemperatureVal">21°C · AQI 28 🌿</span>
-            </div>
-            <div class="ps-env-stat-box">
-              <span style="font-weight:700;color:var(--text-body);">EV Grid Load</span>
-              <span style="font-size:12px;font-weight:800;color:var(--accent-blue)" id="envGridLoadVal">⚡ 22 kW
-                Active</span>
-            </div>
-          </div>
+
 
           <!-- Card 2: Current Parked Vehicle (from img2.png) -->
           <div class="ps-parked-card" id="currentParkedCard">
@@ -538,7 +467,6 @@
   <script src="reservation-logic.js?v=2.2"></script>
   <script src="analytics.js?v=2.2"></script>
   <script src="storage.js?v=2.2"></script>
-  <script src="simulation.js?v=2.2"></script>
   <script src="map.js?v=2.2"></script>
   <script src="app.js?v=2.2"></script>
 </body>

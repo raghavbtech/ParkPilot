@@ -46,8 +46,7 @@ The system employs a unified **Cyber-Obsidian** design philosophy with glassmorp
 - 🕒 **Interval Conflict-Free Reservations**: Mathematical interval overlap validation preventing overlapping holds on the same bay while allowing contiguous back-to-back bookings.
 - ⏱️ **Automatic Reservation Expiry**: Client-side background timer (`setInterval`) that releases reserved bays upon window expiration.
 - 📡 **Native Parking Network View**: Custom HTML/CSS/SVG radar screen visualizing user GPS position, relative facility coordinate nodes, occupancy badges, and distance rings.
-- 🎫 **Digital Parking Pass Generator**: Instant check-in pass generation with formatted timestamps, fee structures, bay identifiers, and printable receipt modals.
-- 🌓 **Dual-Theme Support**: Instant switching between Cyber Dark mode and Luxury Light mode, stored persistently in `localStorage`.
+- 🌑 **Cyber-Obsidian Dark Mode**: Optimized dark-mode obsidian interface accented with cyber-lime and neon-cyan visual cues for maximum contrast and eye comfort.
 
 ---
 
@@ -122,7 +121,6 @@ ParkPilot/
 │   ├── parking.js          # Parking management controller & CRUD helpers
 │   ├── reservations.js     # Reservation management controller & event listeners
 │   ├── utils.js            # General utility helpers (formatting, debounce, IDs)
-│   ├── simulation.js       # Main-thread simulation loop using real business logic
 │   ├── map.js              # Native HTML/CSS/SVG Parking Network View (Zero Leaflet)
 │   └── app.js              # Master application controller, routing, and UI rendering
 │
@@ -186,13 +184,13 @@ node test_ui_interactions.js
 | **Dashboard (`index.html`)** | Live operations summary, deterministic recommendation, and native SVG radar |
 | **Parking Management (`parking.html`)** | Multi-lot CRUD directory with Add/Edit/Delete dialogs and 2D bay matrix |
 | **Reservations (`reservations.html`)** | Interval-overlap collision prevention, bookings table, and edit/cancel modals |
-| **Cockpit Console (`dashboard.html`)** | Operations cockpit HUD, vehicle telemetry, and single-level floorplan |
+| **Cockpit Console (`dashboard.html`)** | Operations cockpit HUD, vehicle session monitor, and single-level floorplan |
 
 ---
 
 ## Future Improvements
 
-1. **IndexedDB Integration**: Transition large historical telemetry logs from `localStorage` to the native browser `IndexedDB` API for greater storage capacity.
+1. **IndexedDB Integration**: Transition large historical parking logs from `localStorage` to the native browser `IndexedDB` API for greater storage capacity.
 2. **Multi-Floor Vertical Stacking**: Expand the 2D layout engine to render interactive multi-level parking towers with animated floor transitions.
 3. **Progressive Web App (PWA) Offline Manifest**: Add a service worker and `manifest.json` for home-screen installation and offline ticket inspection.
 4. **Dynamic Tariff Engine**: Implement time-of-day variable pricing rules with configurable off-peak and weekend rates.

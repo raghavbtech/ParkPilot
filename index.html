@@ -4,10 +4,6 @@
   <meta charset="UTF-8" />
   <script>
     (function () {
-      try {
-        var t = localStorage.getItem('PARKPILOT_THEME');
-        if (t) document.documentElement.setAttribute('data-theme', t);
-      } catch (e) { }
 
       window.quickLogin = function (role) {
         role = role || 'admin';
@@ -44,6 +40,9 @@
     })();
   </script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
@@ -69,9 +68,6 @@
         <a href="javascript:void(0)" onclick="window.scrollToSection('features'); return false;">Platform Technology</a>
       </nav>
       <div class="header-actions">
-        <button class="btn-plain" onclick="window.toggleAppTheme()" title="Toggle Theme (Cyber Dark ⇋ Luxury Light)">
-          <span class="themeToggleEmojiMulti" style="font-size: 15px;">🌓</span>
-        </button>
         <div id="landingAuthSnippet" style="display:inline-flex; align-items:center; gap:8px;">
           <a href="auth.html" class="btn-plain" style="font-size: 12px; font-weight: 700;">Sign in</a>
           <button class="btn btn-primary" onclick="window.handleConsoleAccess()">Operator console ↗</button>
@@ -391,7 +387,6 @@
   <script src="reservation-logic.js?v=2.2"></script>
   <script src="analytics.js?v=2.2"></script>
   <script src="storage.js?v=2.2"></script>
-  <script src="simulation.js?v=2.2"></script>
   <script src="map.js?v=2.2"></script>
   <script src="app.js?v=2.2"></script>
 </body>

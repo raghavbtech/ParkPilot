@@ -41,22 +41,6 @@
   --radius-lg: 18px;
 }
 
-[data-theme="light"] {
-  --bg: #f3f6f4;
-  --bg2: #e7ece9;
-  --panel: #ffffff;
-  --panel-2: #f4f8f6;
-  --text: #091310;
-  --muted: #4e5f57;
-  --muted2: #72847c;
-  --line: rgba(30, 60, 48, 0.15);
-  --line-strong: rgba(30, 60, 48, 0.28);
-  --cyan: #0d9488;
-  --lime: #2e7d32;
-  --amber: #b45309;
-  --rose: #e11d48;
-  --violet: #7c3aed;
-}
 
 * { box-sizing: border-box; }
 html { scroll-behavior: smooth; }
@@ -597,27 +581,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
   box-shadow: 0 0 10px var(--cyan);
 }
 .console-actions { display: flex; align-items: center; gap: 8px; margin-left: auto; }
-.sim-toggle {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  padding: 7px 8px;
-  color: var(--lime);
-  border: 1px solid rgba(182,239,120,.18);
-  border-radius: 5px;
-  background: rgba(182,239,120,.04);
-  font: 500 8px var(--mono);
-  letter-spacing: .08em;
-  cursor: pointer;
-}
-.sim-toggle.paused {
-  color: var(--amber);
-  border-color: rgba(234,198,111,.25);
-  background: rgba(234,198,111,.05);
-}
-.sim-toggle.paused .dot { background: var(--amber); box-shadow: 0 0 10px var(--amber); }
 
-.speed { color: var(--muted); font: 500 9px var(--mono); cursor: pointer; }
 .admin {
   display: flex;
   align-items: center;
@@ -921,12 +885,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 }
 .right-footer button { color: var(--cyan); background: none; font: inherit; cursor: pointer; }
 
-/* Facility Telemetry */
-.telemetry-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 17px; }
-.telemetry-grid div { display: flex; flex-direction: column; gap: 4px; }
-.telemetry-grid span { color: var(--muted2); font: 500 7px var(--mono); }
-.telemetry-grid strong { font: 700 15px var(--display); }
-.telemetry-grid small { margin-left: 3px; color: var(--muted); font: 400 8px var(--body); }
+
 
 /* Parked Vehicle Monitor */
 .vehicle-plate {
@@ -1120,6 +1079,136 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
   gap: 8px;
   padding-top: 16px;
   border-top: 1px solid var(--line);
+}
+
+/* Floating Toast Notification System */
+.ps-toast-container {
+  position: fixed;
+  top: 24px;
+  right: 24px;
+  z-index: 999999;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  pointer-events: none;
+  max-width: 440px;
+}
+
+.ps-toast {
+  pointer-events: auto;
+  min-width: 290px;
+  max-width: 440px;
+  padding: 13px 18px;
+  border-radius: 10px;
+  font-family: var(--body, sans-serif);
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.4;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.75), 0 2px 10px rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(14px);
+  animation: psToastSlideIn 0.32s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+@keyframes psToastSlideIn {
+  from {
+    opacity: 0;
+    transform: translateX(50px) scale(0.92);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+}
+
+.ps-toast.success {
+  background: rgba(12, 34, 22, 0.95);
+  border: 1px solid var(--lime, #a3e635);
+  color: #f7fee7;
+}
+
+.ps-toast.success::before {
+  content: '✓';
+  display: inline-grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: rgba(163, 230, 53, 0.2);
+  color: var(--lime, #a3e635);
+  font-weight: 900;
+  font-size: 11px;
+  flex-shrink: 0;
+}
+
+.ps-toast.error {
+  background: rgba(45, 14, 20, 0.95);
+  border: 1px solid var(--rose, #ef8c91);
+  color: #fff1f2;
+}
+
+.ps-toast.error::before {
+  content: '✕';
+  display: inline-grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: rgba(239, 140, 145, 0.25);
+  color: var(--rose, #ef8c91);
+  font-weight: 900;
+  font-size: 11px;
+  flex-shrink: 0;
+}
+
+.ps-toast.info {
+  background: rgba(10, 30, 36, 0.95);
+  border: 1px solid var(--cyan, #6ce3d3);
+  color: #ecfeff;
+}
+
+.ps-toast.info::before {
+  content: 'ℹ';
+  display: inline-grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: rgba(108, 227, 211, 0.2);
+  color: var(--cyan, #6ce3d3);
+  font-weight: 900;
+  font-size: 12px;
+  flex-shrink: 0;
+}
+
+.ps-toast.warning {
+  background: rgba(45, 30, 10, 0.95);
+  border: 1px solid var(--amber, #f59e0b);
+  color: #fffbeb;
+}
+
+.ps-toast.warning::before {
+  content: '⚠';
+  display: inline-grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: rgba(245, 158, 11, 0.2);
+  color: var(--amber, #f59e0b);
+  font-weight: 900;
+  font-size: 11px;
+  flex-shrink: 0;
+}
+
+/* Active Facility Card Highlighting */
+.ps-lot-crud-card.selected {
+  border: 2px solid var(--accent-primary, #ccff00) !important;
+  box-shadow: 0 0 25px rgba(204, 255, 0, 0.16), inset 0 0 15px rgba(204, 255, 0, 0.04) !important;
+  background: rgba(204, 255, 0, 0.03) !important;
 }
 
 /* Parking Pass Card */
@@ -1405,23 +1494,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
   align-items: center;
   gap: 12px;
 }
-.ps-sim-strip {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-.ps-sim-trigger {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  padding: 7px 11px;
-  color: var(--lime);
-  border: 1px solid rgba(182, 239, 120, 0.25);
-  border-radius: 6px;
-  background: rgba(182, 239, 120, 0.06);
-  font: 700 9px var(--mono);
-  cursor: pointer;
-}
+
 .ps-topbar-user {
   display: flex;
   align-items: center;
@@ -1821,49 +1894,21 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
   50% { opacity: 1; transform: translateY(-4px); }
   100% { opacity: 0.3; transform: translateY(0); }
 }
-.ps-gauge-arc-svg {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  pointer-events: none;
-}
-.ps-hud-gauge-left {
-  position: absolute;
-  left: 36px;
-  bottom: 30px;
-  text-align: center;
-}
-.ps-hud-gauge-right {
-  position: absolute;
-  right: 36px;
-  bottom: 30px;
-  text-align: center;
-}
-.ps-gauge-val {
-  font: 700 28px var(--mono);
-  color: var(--text);
-  line-height: 1;
-}
-.ps-gauge-unit {
-  font: 500 9px var(--mono);
-  color: var(--muted);
-  margin-top: 3px;
-}
+
 .ps-cockpit-footer {
   padding: 14px 20px;
   background: rgba(14, 28, 24, 0.95);
   border-top: 1px solid var(--line);
 }
 
-/* Bottom Cards Row (Telemetry, Currently Parked, Vehicle Options) */
+/* Bottom Cards Row (Currently Parked, Vehicle Options) */
 .ps-bottom-cards-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(2, 1fr);
   gap: 16px;
   margin-top: 4px;
 }
-.ps-env-card, .ps-parked-card, .ps-options-card {
+.ps-parked-card, .ps-options-card {
   background: rgba(17, 33, 28, 0.7);
   border: 1px solid var(--line);
   border-radius: 12px;
@@ -1872,15 +1917,6 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
   flex-direction: column;
   justify-content: space-between;
   gap: 12px;
-}
-.ps-env-stat-box {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 8px 12px;
-  background: rgba(255, 255, 255, 0.025);
-  border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.04);
 }
 .ps-parked-plate-display {
   background: #08110f;
@@ -2018,7 +2054,6 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
   .console-header { padding: 0 15px; }
   .console-header .brand { margin-right: 0; }
   .console-nav { display: none; }
-  .sim-toggle, .speed { display: none; }
   .sidebar { display: none; }
   .dashboard { padding: 25px 16px 35px; }
   .kpis { grid-template-columns: repeat(2,1fr); }

@@ -149,21 +149,25 @@ function renderParkingNetworkView() {
   lotsList.sort((a, b) => a.distance - b.distance);
   const recommendedLotId = lotsList.find(item => item.freeSlots > 0)?.lot.id || (lotsList[0]?.lot.id);
 
-  // SVG Radar center & scale
+  // SVG Radar center & dynamic distance-adapted scale
   const radarW = 600;
   const radarH = 340;
   const centerX = radarW / 2;
   const centerY = radarH / 2;
-  // Maximum radius in km mapped to 130px
-  const maxRadiusKm = 4.0;
-  const scalePxPerKm = 36;
+
+  // Dynamically compute the maximum distance among all lots to fit all facilities nicely
+  const distances = lotsList.map(item => item.distance);
+  const maxDistanceKm = distances.length > 0 ? Math.max(...distances, 3.0) : 4.0;
+  const visibleRadiusKm = Math.max(4.0, maxDistanceKm * 1.15); // 15% padding so nodes aren't clamped
+  const maxAvailableRadiusPx = Math.min(centerX - 42, centerY - 42);
+  const scalePxPerKm = maxAvailableRadiusPx / visibleRadiusKm;
 
   // Generate SVG nodes for lots
   const nodesSvg = lotsList.map(item => {
     // Relative coordinates
     const dLat = item.lot.lat - userLat;
     const dLng = item.lot.lng - userLng;
-    // 1 deg lat ≈ 111 km, 1 deg lng ≈ 111 * cos(13°) ≈ 108 km
+    // 1 deg lat ≈ 111 km, 1 deg lng ≈ 111 * cos(avgLat) ≈ 108 km
     const dxKm = dLng * 108;
     const dyKm = -dLat * 111; // Invert Y for screen coordinates
 
@@ -171,8 +175,8 @@ function renderParkingNetworkView() {
     let y = centerY + dyKm * scalePxPerKm;
 
     // Constrain inside radar boundaries
-    x = Math.max(35, Math.min(radarW - 35, x));
-    y = Math.max(35, Math.min(radarH - 35, y));
+    x = Math.max(38, Math.min(radarW - 38, x));
+    y = Math.max(38, Math.min(radarH - 38, y));
 
     const isRec = item.lot.id === recommendedLotId;
     const isSel = item.lot.id === selectedLotId;
@@ -213,6 +217,14 @@ function renderParkingNetworkView() {
     `;
   }).join('');
 
+  const ring1Km = (visibleRadiusKm * 0.33).toFixed(1);
+  const ring2Km = (visibleRadiusKm * 0.66).toFixed(1);
+  const ring3Km = (visibleRadiusKm * 0.95).toFixed(1);
+
+  const r1 = Math.round(maxAvailableRadiusPx * 0.33);
+  const r2 = Math.round(maxAvailableRadiusPx * 0.66);
+  const r3 = Math.round(maxAvailableRadiusPx * 0.95);
+
   container.innerHTML = `
     <div class="ps-network-view-wrapper" style="display:flex;flex-direction:column;height:100%;background:linear-gradient(180deg, #0d1a16 0%, #08110f 100%);color:#dff8eb;font-family:var(--body, sans-serif);position:relative;overflow:hidden;">
       <!-- Header Bar -->
@@ -220,7 +232,7 @@ function renderParkingNetworkView() {
         <div style="display:flex;align-items:center;gap:10px;">
           <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--lime, #a3e635);box-shadow:0 0 8px #a3e635;"></span>
           <span style="font-size:12px;font-weight:800;letter-spacing:0.06em;color:var(--cyan, #6ce3d3);">PARKING NETWORK RADAR</span>
-          <span style="font-size:10.5px;color:rgba(223,248,235,0.6);font-family:var(--mono, monospace);">5.0 KM COVERAGE</span>
+          <span style="font-size:10.5px;color:rgba(223,248,235,0.6);font-family:var(--mono, monospace);">${Math.ceil(visibleRadiusKm)} KM COVERAGE</span>
         </div>
         <div style="display:flex;align-items:center;gap:12px;">
           <span style="font-size:11px;color:rgba(223,248,235,0.7);font-family:var(--mono, monospace);">GPS: ${userLat.toFixed(4)}°N, ${userLng.toFixed(4)}°E</span>
@@ -243,15 +255,14 @@ function renderParkingNetworkView() {
           <rect width="100%" height="100%" fill="url(#radarGlow)" />
 
           <!-- Concentric Distance Range Rings -->
-          <circle cx="${centerX}" cy="${centerY}" r="40" fill="none" stroke="rgba(108,227,211,0.12)" stroke-width="1" />
-          <circle cx="${centerX}" cy="${centerY}" r="80" fill="none" stroke="rgba(108,227,211,0.12)" stroke-width="1" />
-          <circle cx="${centerX}" cy="${centerY}" r="120" fill="none" stroke="rgba(108,227,211,0.12)" stroke-width="1" />
-          <circle cx="${centerX}" cy="${centerY}" r="155" fill="none" stroke="rgba(108,227,211,0.18)" stroke-width="1.2" stroke-dasharray="4,4" />
+          <circle cx="${centerX}" cy="${centerY}" r="${r1}" fill="none" stroke="rgba(108,227,211,0.12)" stroke-width="1" />
+          <circle cx="${centerX}" cy="${centerY}" r="${r2}" fill="none" stroke="rgba(108,227,211,0.12)" stroke-width="1" />
+          <circle cx="${centerX}" cy="${centerY}" r="${r3}" fill="none" stroke="rgba(108,227,211,0.18)" stroke-width="1.2" stroke-dasharray="4,4" />
 
           <!-- Distance Ring Labels -->
-          <text x="${centerX + 42}" y="${centerY - 4}" font-size="8" font-family="var(--mono, monospace)" fill="rgba(108,227,211,0.4)">1.0 KM</text>
-          <text x="${centerX + 82}" y="${centerY - 4}" font-size="8" font-family="var(--mono, monospace)" fill="rgba(108,227,211,0.4)">2.0 KM</text>
-          <text x="${centerX + 122}" y="${centerY - 4}" font-size="8" font-family="var(--mono, monospace)" fill="rgba(108,227,211,0.4)">3.5 KM</text>
+          <text x="${centerX + r1 + 3}" y="${centerY - 4}" font-size="8" font-family="var(--mono, monospace)" fill="rgba(108,227,211,0.5)">${ring1Km} KM</text>
+          <text x="${centerX + r2 + 3}" y="${centerY - 4}" font-size="8" font-family="var(--mono, monospace)" fill="rgba(108,227,211,0.5)">${ring2Km} KM</text>
+          <text x="${centerX + r3 + 3}" y="${centerY - 4}" font-size="8" font-family="var(--mono, monospace)" fill="rgba(108,227,211,0.5)">${ring3Km} KM</text>
 
           <!-- Crosshairs -->
           <line x1="20" y1="${centerY}" x2="${radarW - 20}" y2="${centerY}" stroke="rgba(108,227,211,0.08)" stroke-width="1" />
@@ -280,7 +291,7 @@ function renderParkingNetworkView() {
 
         <!-- Floating Legend & Info Box -->
         <div style="position:absolute;top:10px;left:14px;background:rgba(11,23,20,0.85);backdrop-filter:blur(6px);border:1px solid rgba(108,227,211,0.18);border-radius:8px;padding:8px 12px;font-size:10px;display:flex;flex-direction:column;gap:5px;pointer-events:none;">
-          <div style="font-weight:800;color:var(--cyan, #6ce3d3);margin-bottom:2px;">RADAR TELEMETRY</div>
+          <div style="font-weight:800;color:var(--cyan, #6ce3d3);margin-bottom:2px;">RADAR NAVIGATION</div>
           <div style="display:flex;align-items:center;gap:6px;"><span style="width:7px;height:7px;border-radius:50%;background:#a3e635;"></span> Open (&lt;70% Occ)</div>
           <div style="display:flex;align-items:center;gap:6px;"><span style="width:7px;height:7px;border-radius:50%;background:#ffb020;"></span> Filling (70-99%)</div>
           <div style="display:flex;align-items:center;gap:6px;"><span style="width:7px;height:7px;border-radius:50%;background:#ef8c91;"></span> Full (100%)</div>

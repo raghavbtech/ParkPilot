@@ -82,7 +82,6 @@ require('./booking-logic.js');
 require('./reservation-logic.js');
 require('./analytics.js');
 require('./storage.js');
-require('./simulation.js');
 require('./map.js');
 require('./app.js');
 
@@ -427,30 +426,14 @@ test('storage', 'saveToLocalStorage and loadFromLocalStorage preserve Map and Cl
 });
 
 // -------------------------------------------------------------
-// MODULE 8: SIMULATION ENGINE (simulation.js)
+// MODULE 8: PLATE GENERATION UTILITIES (data.js)
 // -------------------------------------------------------------
-console.log('\n--- 8. Validating Simulation Engine (simulation.js) ---');
+console.log('\n--- 8. Validating Plate Generation Utilities (data.js) ---');
 
-test('simulation', 'generateRandomPlate produces valid formatted plates', () => {
+test('data', 'generateRandomPlate produces valid formatted plates', () => {
   const plate = generateRandomPlate();
   assert.ok(typeof plate === 'string');
   assert.ok(plate.length >= 8);
-});
-
-test('simulation', 'runSimulationTick generates live events using business logic', () => {
-  const seedLots = createSeedLotsMap();
-  const state = {
-    lots: seedLots,
-    activeTickets: new Map(),
-    activeVehicleNumbers: new Set(),
-    parkingHistory: [],
-    activityLog: [],
-    userCoords: { lat: 28.6139, lng: 77.2090 }
-  };
-
-  const event = runSimulationTick(state);
-  assert.ok(event !== null && event !== undefined);
-  assert.ok(state.activityLog.length > 0);
 });
 
 // -------------------------------------------------------------
@@ -527,14 +510,10 @@ test('app', 'quickLogin switches between Admin and Regular User', () => {
   assert.strictEqual(window.appState.currentUser.displayName, 'Super Admin');
 });
 
-test('app', 'toggleAppTheme toggles theme attribute', () => {
-  window.toggleAppTheme();
-  const t1 = document.documentElement.getAttribute('data-theme');
-  assert.ok(t1 === 'light' || t1 === 'dark');
-
-  window.toggleAppTheme();
-  const t2 = document.documentElement.getAttribute('data-theme');
-  assert.ok(t2 !== t1);
+test('app', 'Dark mode is permanently enforced', () => {
+  const t = document.documentElement.getAttribute('data-theme');
+  assert.strictEqual(t, 'dark');
+  assert.strictEqual(window.appState.currentTheme, 'dark');
 });
 
 test('app', 'canUserCheckoutTicket RBAC enforcement and ownership protection', () => {

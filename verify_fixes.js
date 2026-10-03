@@ -50,7 +50,6 @@ require('./booking-logic.js');
 require('./reservation-logic.js');
 require('./analytics.js');
 require('./storage.js');
-require('./simulation.js');
 require('./map.js');
 require('./app.js');
 
