@@ -46,10 +46,10 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="style.css" />
-  <title>Staff Reservations — ParkPilot</title>
+  <link rel="stylesheet" href="../css/style.css" />
+  <title>Parking Bays Matrix — ParkPilot</title>
 </head>
-<body data-page="reservations">
+<body data-page="slots">
   <div class="ps-app">
     <aside class="ps-icon-sidebar">
       <a href="dashboard.html" class="ps-sidebar-logo" title="ParkPilot Console">
@@ -61,12 +61,12 @@
             <rect x="3" y="3" width="7" height="7" rx="1.5" /><rect x="14" y="3" width="7" height="7" rx="1.5" /><rect x="14" y="14" width="7" height="7" rx="1.5" /><rect x="3" y="14" width="7" height="7" rx="1.5" />
           </svg>
         </a>
-        <a href="parking.html" class="ps-icon-btn" data-view="slots" data-tooltip="Parking Management">
+        <a href="parking.html" class="ps-icon-btn active" data-view="slots" data-tooltip="Parking Management">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
             <rect x="3" y="3" width="18" height="18" rx="3" /><path d="M9 17V7h4a3 3 0 0 1 0 6H9" />
           </svg>
         </a>
-        <a href="reservations.html" class="ps-icon-btn active" data-view="reservations" data-tooltip="Staff Reservations">
+        <a href="reservations.html" class="ps-icon-btn" data-view="reservations" data-tooltip="Staff Reservations">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
             <rect x="3" y="4" width="18" height="18" rx="3" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" />
           </svg>
@@ -87,7 +87,7 @@
     <main class="ps-main-layout">
       <header class="ps-floating-topbar">
         <div style="display: flex; align-items: center; gap: 24px;">
-          <a href="dashboard.html" class="brand" style="text-decoration: none;">
+          <a href="../index.html" class="brand" style="text-decoration: none;" title="Back to ParkPilot Landing Page">
             <span class="brand-mark"><span></span></span>
             <span class="brand-copy">
               <strong>ParkPilot</strong>
@@ -96,8 +96,8 @@
           </a>
           <div class="ps-topbar-nav-pills">
             <a href="dashboard.html" class="ps-top-pill" id="topNavDashboard" style="text-decoration:none;">Overview</a>
-            <a href="parking.html" class="ps-top-pill" id="topNavManagement" style="text-decoration:none;">Parking Management</a>
-            <a href="reservations.html" class="ps-top-pill active" id="topNavReservation" style="text-decoration:none;">Reservations</a>
+            <a href="parking.html" class="ps-top-pill active" id="topNavManagement" style="text-decoration:none;">Parking Management</a>
+            <a href="reservations.html" class="ps-top-pill" id="topNavReservation" style="text-decoration:none;">Reservations</a>
             <a href="map.html" class="ps-top-pill" id="topNavMap" style="text-decoration:none;">City Map</a>
             <a href="analytics.html" class="ps-top-pill" id="topNavAnalytics" style="text-decoration:none;">Analytics</a>
           </div>
@@ -124,151 +124,200 @@
           <button class="ps-circle-action-btn" onclick="window.handleLogout()" title="Sign out" style="color:var(--rose); font-size:13px; margin-left:4px;">⎋</button>
         </div>
       </header>
-<div class="ps-view" id="view-reservations">
+<div class="ps-view" id="view-slots">
         <!-- Dashboard Head / Greeting -->
         <div class="dash-head" style="margin-bottom: 20px;">
           <div>
-            <span class="eyebrow">OPERATOR CONSOLE / RESERVATIONS</span>
-            <h1 style="margin: 6px 0 2px; font: 700 28px var(--display); letter-spacing: -.06em;">Advance Bookings & Holds<span class="cyan">.</span></h1>
-            <p style="margin: 0; color: var(--muted); font-size: 11.5px;">Interval collision prevention, guaranteed employee stalls, and active passes.</p>
+            <span class="eyebrow">OPERATOR CONSOLE / BAYS MATRIX</span>
+            <h1 style="margin: 6px 0 2px; font: 700 28px var(--display); letter-spacing: -.06em;">Parking Bays Management<span class="cyan">.</span></h1>
+            <p style="margin: 0; color: var(--muted); font-size: 11.5px;">Live capacity, vehicle size compatibility, and real-time bay status.</p>
           </div>
           <div class="dash-actions">
-            <button class="btn btn-outline" onclick="window.printTicket()">↓ Export passes</button>
-            <button class="btn btn-primary" onclick="window.openQuickParkModal()">＋ New reservation</button>
+            <button class="btn btn-outline" onclick="window.printTicket()">↓ Export bays</button>
+            <button class="btn btn-outline" onclick="window.openEditLotModal(window.appState.selectedLotId)">✏️ Edit facility</button>
+            <button class="btn btn-danger" onclick="window.deleteLot(window.appState.selectedLotId)">🗑️ Delete facility</button>
+            <button class="btn btn-primary" id="btnAddNewLot" onclick="window.openCreateLotModal()">＋ New facility</button>
           </div>
         </div>
 
-        <div style="display:grid;grid-template-columns:1fr 1.3fr;gap:20px;">
-          <div class="ps-tower-card">
-            <div class="ps-tower-head" style="margin-bottom: 14px;">
-              <span class="ps-tower-title">Book Staff Reserved Bay</span>
-              <span class="pill">INTERVAL LOCK</span>
+        <div class="ps-tower-card">
+          <div class="ps-tower-head">
+            <div style="display:flex;align-items:center;gap:12px;">
+              <span class="ps-tower-title">Facility Bays Matrix</span>
+              <span class="pill">● LIVE</span>
             </div>
-            <div id="staffConflictAlert"
-              style="display:none;background:rgba(239,140,145,0.12);border:1px solid rgba(239,140,145,0.3);color:var(--rose);padding:10px 14px;border-radius:8px;font-size:11px;font-weight:700;margin-bottom:12px;">
-              <span id="staffConflictText">Warning: Overlaps with existing booking!</span>
-            </div>
-
-            <form id="staffReservationForm" style="display:flex;flex-direction:column;gap:14px;">
-              <div style="display:flex;flex-direction:column;gap:6px;">
-                <label style="font: 500 8.5px var(--mono); text-transform: uppercase; color: var(--muted); letter-spacing: .1em;">Employee ID</label>
-                <input type="text" id="staffIdInput" placeholder="e.g. STAFF-CHIEF" required class="ps-input-field" />
-              </div>
-
-              <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-                <div style="display:flex;flex-direction:column;gap:6px;">
-                  <label style="font: 500 8.5px var(--mono); text-transform: uppercase; color: var(--muted); letter-spacing: .1em;">Facility</label>
-                  <select id="staffLotSelect" class="ps-input-field"></select>
-                </div>
-                <div style="display:flex;flex-direction:column;gap:6px;">
-                  <label style="font: 500 8.5px var(--mono); text-transform: uppercase; color: var(--muted); letter-spacing: .1em;">Staff Bay</label>
-                  <select id="staffSlotSelect" class="ps-input-field"></select>
-                </div>
-              </div>
-
-              <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-                <div style="display:flex;flex-direction:column;gap:6px;">
-                  <label style="font: 500 8.5px var(--mono); text-transform: uppercase; color: var(--muted); letter-spacing: .1em;">Start Time</label>
-                  <input type="time" id="staffStartTime" required class="ps-input-field" />
-                </div>
-                <div style="display:flex;flex-direction:column;gap:6px;">
-                  <label style="font: 500 8.5px var(--mono); text-transform: uppercase; color: var(--muted); letter-spacing: .1em;">End Time</label>
-                  <input type="time" id="staffEndTime" required class="ps-input-field" />
-                </div>
-              </div>
-
-              <button type="submit" class="btn btn-primary" style="margin-top: 4px;">Confirm Staff Booking</button>
-            </form>
-          </div>
-
-          <div class="ps-tower-card">
-            <div class="ps-tower-head" style="margin-bottom: 14px;">
-              <span class="ps-tower-title">Active Staff Bookings</span>
-              <span style="font: 700 11px var(--mono); color: var(--lime);" id="activeReservationCount">0 Active</span>
-            </div>
-            <div style="overflow-x:auto;">
-              <table class="ps-table">
-                <thead>
-                  <tr>
-                    <th>ID</th>
-                    <th>Staff</th>
-                    <th>Facility</th>
-                    <th>Bay</th>
-                    <th>Window</th>
-                    <th>Status</th>
-                    <th style="text-align:right;">Actions</th>
-                  </tr>
-                </thead>
-                <tbody id="reservationsTableBody"></tbody>
-              </table>
+            <div class="ps-level-pills">
+              <button class="ps-level-pill active" onclick="window.filterSlotsByZone('all', this)">All</button>
+              <button class="ps-level-pill" onclick="window.filterSlotsByZone('car', this)">🚗 Car</button>
+              <button class="ps-level-pill" onclick="window.filterSlotsByZone('suv', this)">🚙 SUV</button>
+              <button class="ps-level-pill" onclick="window.filterSlotsByZone('ev', this)">⚡ EV</button>
+              <button class="ps-level-pill" onclick="window.filterSlotsByZone('bike', this)">🏍️ Bike</button>
             </div>
           </div>
+          <div class="ps-bays-matrix-row" id="fullSlotGridContainer"
+            style="display:grid;grid-template-columns:repeat(auto-fill, minmax(130px, 1fr));gap:12px;"></div>
         </div>
       </div>
     </main>
   </div>
+<!-- Create New Parking Facility Modal -->
+  <div class="ps-modal-overlay" id="createLotModal" onclick="if(event.target===this)window.closeCreateLotModal()">
+    <div class="ps-modal-card" style="width: 500px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <span style="font-size: 22px;">🏢</span>
+          <div>
+            <span style="font-size:17px;font-weight:800;display:block;">Create New Parking Facility</span>
+            <span style="font-size:11.5px;color:var(--text-muted);">Configure metro facility & dedicated bay capacities</span>
+          </div>
+        </div>
+        <button class="ps-circle-action-btn" onclick="window.closeCreateLotModal()">✕</button>
+      </div>
 
-  <!-- Edit Reservation Modal -->
-  <div class="ps-modal-overlay" id="editReservationModal" onclick="if(event.target===this)window.closeEditReservationModal()">
-    <div class="ps-modal-card" style="width: 460px;">
+      <form id="createLotForm" onsubmit="event.preventDefault(); window.submitNewLot();" style="display:flex;flex-direction:column;gap:13px;">
+        <!-- Facility Name -->
+        <div style="display:flex;flex-direction:column;gap:4px;">
+          <label for="clName" style="font-size:12px;font-weight:700;">Facility Name</label>
+          <input type="text" id="clName" placeholder="e.g. Cyber City Terminal" required class="ps-input-field" />
+        </div>
+
+        <!-- Address -->
+        <div style="display:flex;flex-direction:column;gap:4px;">
+          <label for="clAddress" style="font-size:12px;font-weight:700;">Address & Landmark</label>
+          <input type="text" id="clAddress" placeholder="e.g. 104 Tech Boulevard, Sector 21" required class="ps-input-field" />
+        </div>
+
+        <!-- GPS Coordinates -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+          <div style="display:flex;flex-direction:column;gap:4px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+              <label for="clLat" style="font-size:12px;font-weight:700;">Latitude (°N)</label>
+              <button type="button" onclick="window.fillLotCurrentCoords()" style="background:transparent;border:none;color:var(--accent-primary);font-size:11px;font-weight:800;cursor:pointer;" title="Use My Live GPS">📍 Use GPS</button>
+            </div>
+            <input type="number" id="clLat" placeholder="28.6139" step="0.0001" required class="ps-input-field" />
+          </div>
+          <div style="display:flex;flex-direction:column;gap:4px;">
+            <label for="clLng" style="font-size:12px;font-weight:700;">Longitude (°E)</label>
+            <input type="number" id="clLng" placeholder="77.2090" step="0.0001" required class="ps-input-field" />
+          </div>
+        </div>
+
+        <!-- Slot Capacities with Clear Names and Icons -->
+        <div style="margin-top: 4px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+            <span style="font-size:12px;font-weight:800;color:var(--text-main);letter-spacing:0.02em;">SLOT CAPACITIES (BAYS PER TYPE):</span>
+            <span id="newLotTotalBaysBadge" style="font-size:11.5px;font-weight:800;color:var(--accent-primary);background:rgba(204,255,0,0.12);border:1px solid rgba(204,255,0,0.25);padding:3px 9px;border-radius:6px;">Total: 24 Bays</span>
+          </div>
+
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+            <!-- 1. Bikes -->
+            <div style="display:flex;flex-direction:column;gap:5px;background:var(--bg-card-subtle);padding:10px;border-radius:10px;border:1px solid var(--border-subtle);">
+              <label for="clBike" style="font-size:12px;font-weight:800;color:var(--text-main);display:flex;align-items:center;justify-content:space-between;cursor:pointer;">
+                <span>🏍️ Bike Bays</span>
+                <span style="font-size:10px;color:var(--text-muted);font-weight:600;">Two-Wheeler</span>
+              </label>
+              <input type="number" id="clBike" min="0" value="5" oninput="window.updateNewLotTotalCapacity()" required class="ps-input-field" style="width:100%;box-sizing:border-box;" />
+            </div>
+
+            <!-- 2. Cars -->
+            <div style="display:flex;flex-direction:column;gap:5px;background:var(--bg-card-subtle);padding:10px;border-radius:10px;border:1px solid var(--border-subtle);">
+              <label for="clCar" style="font-size:12px;font-weight:800;color:var(--text-main);display:flex;align-items:center;justify-content:space-between;cursor:pointer;">
+                <span>🚗 Car Bays</span>
+                <span style="font-size:10px;color:var(--text-muted);font-weight:600;">Standard</span>
+              </label>
+              <input type="number" id="clCar" min="0" value="10" oninput="window.updateNewLotTotalCapacity()" required class="ps-input-field" style="width:100%;box-sizing:border-box;" />
+            </div>
+
+            <!-- 3. SUVs -->
+            <div style="display:flex;flex-direction:column;gap:5px;background:var(--bg-card-subtle);padding:10px;border-radius:10px;border:1px solid var(--border-subtle);">
+              <label for="clSuv" style="font-size:12px;font-weight:800;color:var(--text-main);display:flex;align-items:center;justify-content:space-between;cursor:pointer;">
+                <span>🚙 SUV Bays</span>
+                <span style="font-size:10px;color:var(--text-muted);font-weight:600;">Large / 4x4</span>
+              </label>
+              <input type="number" id="clSuv" min="0" value="5" oninput="window.updateNewLotTotalCapacity()" required class="ps-input-field" style="width:100%;box-sizing:border-box;" />
+            </div>
+
+            <!-- 4. EVs -->
+            <div style="display:flex;flex-direction:column;gap:5px;background:var(--bg-card-subtle);padding:10px;border-radius:10px;border:1px solid var(--border-subtle);">
+              <label for="clEv" style="font-size:12px;font-weight:800;color:var(--text-main);display:flex;align-items:center;justify-content:space-between;cursor:pointer;">
+                <span>⚡ EV Bays</span>
+                <span style="font-size:10px;color:var(--accent-primary);font-weight:700;">22kW Charger</span>
+              </label>
+              <input type="number" id="clEv" min="0" value="2" oninput="window.updateNewLotTotalCapacity()" required class="ps-input-field" style="width:100%;box-sizing:border-box;" />
+            </div>
+
+            <!-- 5. Staff Reserved -->
+            <div style="grid-column: span 2; display:flex;flex-direction:column;gap:5px;background:var(--bg-card-subtle);padding:10px;border-radius:10px;border:1px solid var(--border-subtle);">
+              <label for="clStaff" style="font-size:12px;font-weight:800;color:var(--text-main);display:flex;align-items:center;justify-content:space-between;cursor:pointer;">
+                <span>🛡️ Staff / VIP Reserved Bays</span>
+                <span style="font-size:10px;color:var(--text-muted);font-weight:600;">Time Window Reservations</span>
+              </label>
+              <input type="number" id="clStaff" min="0" value="2" oninput="window.updateNewLotTotalCapacity()" required class="ps-input-field" style="width:100%;box-sizing:border-box;" />
+            </div>
+          </div>
+        </div>
+
+        <div style="display:flex;gap:10px;margin-top:8px;">
+          <button type="button" class="ps-btn-secondary" onclick="window.closeCreateLotModal()" style="flex:1;">Cancel</button>
+          <button type="submit" class="ps-btn-primary" style="flex:1;">➕ Create & Register Facility</button>
+        </div>
+      </form>
+  </div>
+
+  <!-- Edit Parking Facility Modal -->
+  <div class="ps-modal-overlay" id="editLotModal" onclick="if(event.target===this)window.closeEditLotModal()">
+    <div class="ps-modal-card" style="width: 480px;">
       <div style="display:flex;justify-content:space-between;align-items:center;">
         <div style="display: flex; align-items: center; gap: 10px;">
           <span style="font-size: 22px;">✏️</span>
           <div>
-            <span style="font-size:17px;font-weight:800;display:block;">Edit Reservation</span>
-            <span style="font-size:11.5px;color:var(--text-muted);">Modify booking details or reschedule time window</span>
+            <span style="font-size:17px;font-weight:800;display:block;">Edit Parking Facility</span>
+            <span style="font-size:11.5px;color:var(--text-muted);">Update facility metadata and GPS coordinates</span>
           </div>
         </div>
-        <button class="ps-circle-action-btn" onclick="window.closeEditReservationModal()">✕</button>
+        <button class="ps-circle-action-btn" onclick="window.closeEditLotModal()">✕</button>
       </div>
 
-      <form id="editReservationForm" onsubmit="event.preventDefault(); window.submitEditReservation();" style="display:flex;flex-direction:column;gap:13px;margin-top:10px;">
+      <form id="editLotForm" onsubmit="event.preventDefault(); window.submitEditLot();" style="display:flex;flex-direction:column;gap:13px;margin-top:10px;">
+        <input type="hidden" id="editLotId" />
         <div style="display:flex;flex-direction:column;gap:4px;">
-          <label style="font-size:12px;font-weight:700;">Reservation ID</label>
-          <input type="text" id="editResId" readonly class="ps-input-field" style="opacity:0.75;" />
+          <label for="editLotName" style="font-size:12px;font-weight:700;">Facility Name</label>
+          <input type="text" id="editLotName" required class="ps-input-field" />
         </div>
         <div style="display:flex;flex-direction:column;gap:4px;">
-          <label style="font-size:12px;font-weight:700;">Staff / Vehicle Plate</label>
-          <input type="text" id="editResStaffId" required class="ps-input-field" />
+          <label for="editLotAddress" style="font-size:12px;font-weight:700;">Address & Landmark</label>
+          <input type="text" id="editLotAddress" required class="ps-input-field" />
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
           <div style="display:flex;flex-direction:column;gap:4px;">
-            <label style="font-size:12px;font-weight:700;">Facility</label>
-            <select id="editResLotSelect" class="ps-input-field"></select>
+            <label for="editLotLat" style="font-size:12px;font-weight:700;">Latitude (°N)</label>
+            <input type="number" id="editLotLat" step="0.0001" required class="ps-input-field" />
           </div>
           <div style="display:flex;flex-direction:column;gap:4px;">
-            <label style="font-size:12px;font-weight:700;">Slot / Bay</label>
-            <select id="editResSlotSelect" class="ps-input-field"></select>
-          </div>
-        </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
-          <div style="display:flex;flex-direction:column;gap:4px;">
-            <label style="font-size:12px;font-weight:700;">Start Time</label>
-            <input type="time" id="editResStartTime" required class="ps-input-field" />
-          </div>
-          <div style="display:flex;flex-direction:column;gap:4px;">
-            <label style="font-size:12px;font-weight:700;">End Time</label>
-            <input type="time" id="editResEndTime" required class="ps-input-field" />
+            <label for="editLotLng" style="font-size:12px;font-weight:700;">Longitude (°E)</label>
+            <input type="number" id="editLotLng" step="0.0001" required class="ps-input-field" />
           </div>
         </div>
         <div style="display:flex;gap:10px;margin-top:8px;">
-          <button type="button" class="ps-btn-secondary" onclick="window.closeEditReservationModal()" style="flex:1;">Cancel</button>
-          <button type="submit" class="ps-btn-primary" style="flex:1;">💾 Save Reservation Changes</button>
+          <button type="button" class="ps-btn-secondary" onclick="window.closeEditLotModal()" style="flex:1;">Cancel</button>
+          <button type="submit" class="ps-btn-primary" style="flex:1;">💾 Save Facility Changes</button>
         </div>
       </form>
     </div>
   </div>
+  <!-- Slot Drawer Backdrop -->
+  <div class="ps-modal-overlay" id="slotDrawerBackdrop" onclick="window.closeSlotDrawer()"></div>
 
   <!-- Slot Inspection Drawer -->
-  <div class="ps-slot-drawer" id="slotDrawer">
+  <div class="ps-slot-drawer" id="slotInspectionDrawer">
     <div class="ps-drawer-head">
       <div>
-        <span style="font-size:18px;font-weight:900;" id="drawerSlotId">CM-C01</span>
-        <span class="ps-facility-badge" id="drawerLotName" style="margin-left:8px;">Cyber City</span>
+        <div style="font-size:18px;font-weight:900;" id="drawerSlotId">CM-C01</div>
+        <div style="font-size:12px;color:var(--text-muted);font-weight:700;" id="drawerSlotStatus">AVAILABLE</div>
       </div>
       <button class="ps-circle-action-btn" onclick="window.closeSlotDrawer()">✕</button>
     </div>
-    <div class="ps-drawer-body" id="drawerContent"></div>
+    <div class="ps-drawer-body" id="drawerBodyContent"></div>
   </div>
 
   <!-- Search Modal (⌘K) -->
@@ -367,14 +416,15 @@
   <div class="ps-toast-container" id="toastContainer"></div>
 
   <!-- Scripts -->
-  <script src="models.js?v=2.2"></script>
-  <script src="data.js?v=2.2"></script>
-  <script src="geolocation.js?v=2.2"></script>
-  <script src="booking-logic.js?v=2.2"></script>
-  <script src="reservation-logic.js?v=2.2"></script>
-  <script src="analytics.js?v=2.2"></script>
-  <script src="storage.js?v=2.2"></script>
-  <script src="map.js?v=2.2"></script>
-  <script src="app.js?v=2.2"></script>
+  <script src="../js/models.js"></script>
+  <script src="../js/data.js"></script>
+  <script src="../js/geolocation.js"></script>
+  <script src="../js/booking-logic.js"></script>
+  <script src="../js/reservation-logic.js"></script>
+  <script src="../js/analytics.js"></script>
+  <script src="../js/storage.js"></script>
+  <script src="../js/map.js"></script>
+  <script src="../js/helpers/utils.js"></script>
+  <script src="../js/app.js"></script>
 </body>
 </html>

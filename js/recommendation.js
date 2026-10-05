@@ -1,6 +1,6 @@
 /**
- * ParkPilot — Parking Recommendation & Slot Allocation Logic (Modular)
+ * ParkPilot — Parking Recommendation & Slot Allocation Logic
  */
 if (typeof require !== 'undefined') {
-  module.exports = require('../booking-logic.js');
+  module.exports = require('./booking-logic.js');
 }
