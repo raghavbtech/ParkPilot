@@ -3,7 +3,7 @@
    Exact ParkPilot Design System & Component Library
    ========================================================================== */
 
-@import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
 
 :root {
   --bg: #08110f;
@@ -20,9 +20,9 @@
   --amber: #eac66f;
   --rose: #ef8c91;
   --violet: #a796f5;
-  --body: Manrope, system-ui, sans-serif;
-  --display: 'Space Grotesk', system-ui, sans-serif;
-  --mono: 'DM Mono', monospace;
+  --body: 'Plus Jakarta Sans', Manrope, Inter, system-ui, sans-serif;
+  --display: 'Space Grotesk', 'Plus Jakarta Sans', system-ui, sans-serif;
+  --mono: 'JetBrains Mono', 'DM Mono', monospace;
   --ease: cubic-bezier(.23,1,.32,1);
 
   /* Legacy & test script compatibility variables */
@@ -1562,18 +1562,42 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
   align-items: center;
 }
 .ps-facility-select {
-  background: rgba(255,255,255,0.04);
-  border: 1px solid var(--line);
+  background: #0f1d19;
+  border: 1px solid rgba(108, 227, 211, 0.35);
   border-radius: 8px;
-  color: var(--text);
-  padding: 8px 14px;
+  color: var(--text, #dff8eb);
+  padding: 8px 32px 8px 14px;
   font-size: 13px;
   font-weight: 700;
   outline: none;
   cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236ce3d3' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  transition: border-color 0.18s ease, background-color 0.18s ease, box-shadow 0.18s ease;
+}
+.ps-facility-select:hover {
+  border-color: var(--cyan, #6ce3d3);
+  background-color: #142823;
 }
 .ps-facility-select:focus {
-  border-color: var(--cyan);
+  border-color: var(--cyan, #6ce3d3);
+  box-shadow: 0 0 0 2px rgba(108, 227, 211, 0.25);
+}
+.ps-facility-select option,
+select.ps-input-field option,
+select option {
+  background-color: #0c1815;
+  color: #dff8eb;
+  padding: 10px 14px;
+  font-weight: 600;
+}
+.ps-facility-select option:hover,
+.ps-facility-select option:checked {
+  background-color: #142823;
+  color: #6ce3d3;
 }
 .ps-tower-title {
   font: 700 15px var(--display);

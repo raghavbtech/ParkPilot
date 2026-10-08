@@ -72,9 +72,9 @@ function getUserCoordinates() {
         });
       },
       {
-        enableHighAccuracy: true,
-        timeout: 6000,
-        maximumAge: 60000
+        enableHighAccuracy: false,
+        timeout: 1500,
+        maximumAge: 300000
       }
     );
   });
